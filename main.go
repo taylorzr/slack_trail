@@ -53,6 +53,7 @@ var diseases = []string{
 	"Cholera",
 	"Diphtheria",
 	"Measles",
+	"Thirst Traps",
 }
 
 func randomDisease() string {
