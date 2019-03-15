@@ -57,7 +57,7 @@ var diseases = []string{
 
 func randomDisease() string {
 	rand.Seed(time.Now().UTC().UnixNano())
-	disease := diseases[rand.Intn(len(diseases))]
+	disease := diseases[rand.Intn(len(diseases)+1)]
 	return disease
 }
 
