@@ -20,7 +20,7 @@ func runCLI() {
 
 	app.Commands = []cli.Command{
 		{
-			Name:  "run",
+			Name:  "iterate",
 			Usage: "run the trail",
 			Action: func(c *cli.Context) error {
 				return runIterationWithSentry()
@@ -65,12 +65,7 @@ func runCLI() {
 							})
 						}
 
-						_, _, err = slackClient.PostMessage(
-							slackChannelID,
-							slack.MsgOptionText("Are any of these the new baby amountee?!?", false),
-							slack.MsgOptionIconEmoji(":frame_with_picture:"),
-							slack.MsgOptionAttachments(attachments...),
-						)
+						err = message("Are any of these the new baby amountee?!?", ":frame_with_picture:", attachments...)
 
 						return err
 					},
@@ -79,13 +74,7 @@ func runCLI() {
 					Name:  "slack",
 					Usage: "post test message to slack",
 					Action: func(c *cli.Context) error {
-						_, _, err := slackClient.PostMessage(
-							slackChannelID,
-							slack.MsgOptionUser("trail"),
-							slack.MsgOptionText("Testing, testing, 123...", false),
-							slack.MsgOptionUsername("trail"),
-							slack.MsgOptionIconEmoji(":rip:"),
-						)
+						err := message("Testing, testing, 123...", ":rip:")
 						return err
 					},
 				},

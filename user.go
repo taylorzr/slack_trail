@@ -18,32 +18,45 @@ type User struct {
 	DeletedAt pq.NullTime `db:"deleted_at"`
 }
 
-func (user User) AnnounceDeath() error {
+func (user User) Bury() error {
 	text := fmt.Sprintf("After %s, %s died of %s", user.Age(), user.SomeName(), randomDisease())
 
-	attachment := slack.Attachment{
+	err := message(text, ":rip:", slack.Attachment{
 		ImageURL: user.Avatar,
 		Title:    "",
+	})
+
+	if err != nil {
+		return err
 	}
 
-	_, _, err := slackClient.PostMessage(
-		slackChannelID,
-		slack.MsgOptionUser("trail"),
-		slack.MsgOptionIconEmoji(":rip:"),
-		slack.MsgOptionText(text, false),
-		slack.MsgOptionAttachments(attachment),
-	)
+	user.DeletedAt = pq.NullTime{Time: time.Now(), Valid: true}
+
+	_, err = db.NamedExec(`
+		UPDATE users SET
+		  deleted = true,
+			deleted_at = :deleted_at
+		WHERE id = :id`, user)
 
 	return err
 }
 
-func (user User) Bury() error {
-	user.DeletedAt = pq.NullTime{Time: time.Now(), Valid: true}
+func (user User) Necromance() error {
+	text := fmt.Sprintf("%s is back from the dead!", user.SomeName())
 
-	_, err := db.NamedExec(`
+	err := message(text, ":zombie:", slack.Attachment{
+		ImageURL: user.Avatar,
+		Title:    "",
+	})
+
+	if err != nil {
+		return err
+	}
+
+	_, err = db.NamedExec(`
 		UPDATE users SET
-		  deleted = true,
-			deleted_at = :deleted_at
+		  deleted = false,
+			deleted_at = null
 		WHERE id = :id`, user)
 
 	return err
@@ -87,14 +100,6 @@ func allUsers() ([]User, error) {
 	}
 
 	return users, nil
-}
-
-func deadUsers() []User {
-	users := []User{}
-
-	db.Select(&users, "SELECT * FROM users WHERE users.deleted = true")
-
-	return users
 }
 
 func createUser(slacker slack.User) error {

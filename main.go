@@ -121,51 +121,45 @@ func runIteration() error {
 		return err
 	}
 
-	babies, err := registerBabies(slackUsers, knownUsers)
+	change := diff(knownUsers, slackUsers)
+
+	err = registerAndAnnounceBabies(change.Babies)
 
 	if err != nil {
 		return err
 	}
 
-	err = announceBabies(babies)
+	for _, corpse := range change.Corpses {
+		err = corpse.Bury()
+
+		if err != nil {
+			return err
+		}
+	}
 
 	if err != nil {
 		return err
 	}
 
-	corpses := fillMorgue(slackUsers, knownUsers)
+	for _, zombie := range change.Zombies {
+		err := zombie.Necromance()
 
-	announceDeathsAndBury(corpses)
+		if err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
 
-func registerBabies(slackUsers []slack.User, knownUsers []User) ([]slack.User, error) {
-	lookup := make(map[string]bool)
-
-	for _, knownUser := range knownUsers {
-		lookup[knownUser.ID] = true
-	}
-
-	babies := []slack.User{}
-
-	for _, slackUser := range slackUsers {
-		if !lookup[slackUser.ID] {
-			babies = append(babies, slackUser)
-
-			err := createUser(slackUser)
-
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	return babies, nil
-}
-
-func announceBabies(babies []slack.User) error {
+func registerAndAnnounceBabies(babies []slack.User) error {
 	for _, baby := range babies {
+		err := createUser(baby)
+
+		if err != nil {
+			return err
+		}
+
 		text := ""
 		if baby.Deleted {
 			text = "I'm sorry for your loss, %s was stillborn"
@@ -180,12 +174,7 @@ func announceBabies(babies []slack.User) error {
 			name = baby.RealName
 		}
 
-		_, _, err := slackClient.PostMessage(
-			slackChannelID,
-			slack.MsgOptionUser("trail"),
-			slack.MsgOptionIconEmoji(":baby:"),
-			slack.MsgOptionText(fmt.Sprintf(text, name), false),
-		)
+		err = message(fmt.Sprintf(text, name), ":baby:")
 
 		if err != nil {
 			return err
@@ -195,43 +184,58 @@ func announceBabies(babies []slack.User) error {
 	return nil
 }
 
-func fillMorgue(slackUsers []slack.User, knownUsers []User) []User {
-	deadLookup := map[string]User{}
+type DiffResult struct {
+	Babies  []slack.User
+	Corpses []User
+	Zombies []User
+}
 
-	for _, user := range knownUsers {
-		deadLookup[user.ID] = user
+func (d *DiffResult) AddBaby(user slack.User) {
+	d.Babies = append(d.Babies, user)
+}
+
+func (d *DiffResult) AddCorpse(user User) {
+	d.Corpses = append(d.Corpses, user)
+}
+
+func (d *DiffResult) AddZombie(user User) {
+	d.Zombies = append(d.Zombies, user)
+}
+
+func diff(users []User, slackUsers []slack.User) DiffResult {
+	diff := DiffResult{}
+
+	lookup := make(map[string]User)
+
+	for _, user := range users {
+		lookup[user.ID] = user
 	}
-
-	corpses := []User{}
 
 	for _, slackUser := range slackUsers {
-		user, known := deadLookup[slackUser.ID]
-
-		// If known is false, that means we didn't know about the user yet. This condition is handled by
-		// announcing new user (stillborn), so we skip it here
-		if known && slackUser.Deleted && !user.Deleted {
-			corpses = append(corpses, user)
+		if user, ok := lookup[slackUser.ID]; ok {
+			if slackUser.Deleted != user.Deleted {
+				if slackUser.Deleted {
+					diff.AddCorpse(user)
+				} else {
+					diff.AddZombie(user)
+				}
+			}
+		} else {
+			diff.AddBaby(slackUser)
 		}
 	}
 
-	return corpses
-
+	return diff
 }
 
-func announceDeathsAndBury(corpses []User) error {
-	for _, corpse := range corpses {
-		err := corpse.AnnounceDeath()
+func message(text string, emoji string, attachments ...slack.Attachment) error {
+	_, _, err := slackClient.PostMessage(
+		slackChannelID,
+		slack.MsgOptionUsername("trail"),
+		slack.MsgOptionIconEmoji(emoji),
+		slack.MsgOptionText(text, false),
+		slack.MsgOptionAttachments(attachments...),
+	)
 
-		if err != nil {
-			return err
-		}
-
-		err = corpse.Bury()
-
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return err
 }
