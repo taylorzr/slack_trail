@@ -80,7 +80,7 @@ func initializeApplication() error {
 	}
 
 	for _, slackUser := range slackUsers {
-		err := createUser(slackUser)
+		_, err := createUser(slackUser)
 
 		if err != nil {
 			return err
@@ -137,12 +137,23 @@ func runIteration() error {
 		}
 	}
 
-	if err != nil {
-		return err
-	}
-
 	for _, zombie := range change.Zombies {
 		err := zombie.Necromance()
+
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, nc := range change.NameChanges {
+		user := fromSlacker(nc.Slacker)
+		err := message(nc.String(), ":name_badge:")
+
+		if err != nil {
+			return err
+		}
+
+		err = user.Update()
 
 		if err != nil {
 			return err
@@ -154,7 +165,7 @@ func runIteration() error {
 
 func registerAndAnnounceBabies(babies []slack.User) error {
 	for _, baby := range babies {
-		err := createUser(baby)
+		user, err := createUser(baby)
 
 		if err != nil {
 			return err
@@ -167,14 +178,7 @@ func registerAndAnnounceBabies(babies []slack.User) error {
 			text = "Congratulations, you have a beautiful new baby named %s"
 		}
 
-		name := ""
-		if baby.RealName == "" {
-			name = baby.Name
-		} else {
-			name = baby.RealName
-		}
-
-		err = message(fmt.Sprintf(text, name), ":baby:")
+		err = message(fmt.Sprintf(text, user.SomeName()), ":baby:")
 
 		if err != nil {
 			return err
@@ -185,9 +189,10 @@ func registerAndAnnounceBabies(babies []slack.User) error {
 }
 
 type DiffResult struct {
-	Babies  []slack.User
-	Corpses []User
-	Zombies []User
+	Babies      []slack.User
+	Corpses     []User
+	Zombies     []User
+	NameChanges []NameChange
 }
 
 func (d *DiffResult) AddBaby(user slack.User) {
@@ -202,6 +207,10 @@ func (d *DiffResult) AddZombie(user User) {
 	d.Zombies = append(d.Zombies, user)
 }
 
+func (d *DiffResult) AddNameChange(nc NameChange) {
+	d.NameChanges = append(d.NameChanges, nc)
+}
+
 func diff(users []User, slackUsers []slack.User) DiffResult {
 	diff := DiffResult{}
 
@@ -213,6 +222,15 @@ func diff(users []User, slackUsers []slack.User) DiffResult {
 
 	for _, slackUser := range slackUsers {
 		if user, ok := lookup[slackUser.ID]; ok {
+			displayName := slackUser.Profile.DisplayName
+			if displayName != user.DisplayName {
+				diff.AddNameChange(NameChange{
+					Slacker: slackUser,
+					From:    user.DisplayName,
+					To:      displayName,
+				})
+			}
+
 			if slackUser.Deleted != user.Deleted {
 				if slackUser.Deleted {
 					diff.AddCorpse(user)
@@ -238,4 +256,14 @@ func message(text string, emoji string, attachments ...slack.Attachment) error {
 	)
 
 	return err
+}
+
+type NameChange struct {
+	Slacker slack.User
+	From    string
+	To      string
+}
+
+func (nc NameChange) String() string {
+	return fmt.Sprintf("%s changed their handle from %s to %s", nc.Slacker.RealName, nc.From, nc.To)
 }

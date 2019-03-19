@@ -9,13 +9,29 @@ import (
 )
 
 type User struct {
-	ID        string      `db:"id"`
-	Deleted   bool        `db:"deleted"`
-	RealName  string      `db:"real_name"`
-	Name      string      `db:"name"`
-	Avatar    string      `db:"avatar"`
-	CreatedAt time.Time   `db:"created_at"`
-	DeletedAt pq.NullTime `db:"deleted_at"`
+	ID          string      `db:"id"`
+	Deleted     bool        `db:"deleted"`
+	RealName    string      `db:"real_name"`
+	DisplayName string      `db:"display_name"`
+	Name        string      `db:"name"`
+	Avatar      string      `db:"avatar"`
+	CreatedAt   time.Time   `db:"created_at"`
+	DeletedAt   pq.NullTime `db:"deleted_at"`
+}
+
+func (user User) Update() error {
+	_, err := db.NamedExec(`
+    UPDATE users SET
+			name = :name,
+			real_name = :real_name,
+			display_name = :display_name,
+			avatar = :avatar,
+			deleted = :deleted
+		WHERE
+		  id = :id
+	`, user)
+
+	return err
 }
 
 func (user User) Bury() error {
@@ -102,22 +118,27 @@ func allUsers() ([]User, error) {
 	return users, nil
 }
 
-func createUser(slacker slack.User) error {
-	user := User{
-		ID:        slacker.ID,
-		Name:      slacker.Name,
-		RealName:  slacker.RealName,
-		Deleted:   slacker.Deleted,
-		Avatar:    slacker.Profile.ImageOriginal,
-		CreatedAt: time.Now(),
-	}
+func createUser(slacker slack.User) (User, error) {
+	user := fromSlacker(slacker)
+	user.CreatedAt = time.Now()
 
 	_, err := db.NamedExec(`
 		INSERT INTO users
-		(id, name, real_name, deleted, avatar, created_at)
+		(id, name, real_name, display_name, avatar, deleted, created_at)
 		VALUES
-		(:id, :name, :real_name, :deleted, :avatar, :created_at)
+		(:id, :name, :real_name, :display_name, :avatar, :deleted, :created_at)
 		`, user)
 
-	return err
+	return user, err
+}
+
+func fromSlacker(slacker slack.User) User {
+	return User{
+		ID:          slacker.ID,
+		Name:        slacker.Name,
+		RealName:    slacker.RealName,
+		DisplayName: slacker.Profile.DisplayName,
+		Deleted:     slacker.Deleted,
+		Avatar:      slacker.Profile.ImageOriginal,
+	}
 }

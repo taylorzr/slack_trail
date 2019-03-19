@@ -45,3 +45,6 @@ migrate create -seq -dir migrations -ext sql some_file_name
 migrate -path migrations -database $DATABASE_URL up
 pg_dump -s avant_trail > structure.sql
 ```
+
+### Helpers
+curl -H "Authorization: Bearer $SLACK_TOKEN" https://slack.com/api/users.list | jq
