@@ -146,14 +146,7 @@ func runIteration() error {
 	}
 
 	for _, nc := range change.NameChanges {
-		user := fromSlacker(nc.Slacker)
-		err := message(nc.String(), ":name_badge:")
-
-		if err != nil {
-			return err
-		}
-
-		err = user.Update()
+		err := nc.User.ChangeName(nc.NewName)
 
 		if err != nil {
 			return err
@@ -161,89 +154,6 @@ func runIteration() error {
 	}
 
 	return nil
-}
-
-func registerAndAnnounceBabies(babies []slack.User) error {
-	for _, baby := range babies {
-		user, err := createUser(baby)
-
-		if err != nil {
-			return err
-		}
-
-		text := ""
-		if baby.Deleted {
-			text = "I'm sorry for your loss, %s was stillborn"
-		} else {
-			text = "Congratulations, you have a beautiful new baby named %s"
-		}
-
-		err = message(fmt.Sprintf(text, user.SomeName()), ":baby:")
-
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-type DiffResult struct {
-	Babies      []slack.User
-	Corpses     []User
-	Zombies     []User
-	NameChanges []NameChange
-}
-
-func (d *DiffResult) AddBaby(user slack.User) {
-	d.Babies = append(d.Babies, user)
-}
-
-func (d *DiffResult) AddCorpse(user User) {
-	d.Corpses = append(d.Corpses, user)
-}
-
-func (d *DiffResult) AddZombie(user User) {
-	d.Zombies = append(d.Zombies, user)
-}
-
-func (d *DiffResult) AddNameChange(nc NameChange) {
-	d.NameChanges = append(d.NameChanges, nc)
-}
-
-func diff(users []User, slackUsers []slack.User) DiffResult {
-	diff := DiffResult{}
-
-	lookup := make(map[string]User)
-
-	for _, user := range users {
-		lookup[user.ID] = user
-	}
-
-	for _, slackUser := range slackUsers {
-		if user, ok := lookup[slackUser.ID]; ok {
-			displayName := slackUser.Profile.DisplayName
-			if displayName != user.DisplayName {
-				diff.AddNameChange(NameChange{
-					Slacker: slackUser,
-					From:    user.DisplayName,
-					To:      displayName,
-				})
-			}
-
-			if slackUser.Deleted != user.Deleted {
-				if slackUser.Deleted {
-					diff.AddCorpse(user)
-				} else {
-					diff.AddZombie(user)
-				}
-			}
-		} else {
-			diff.AddBaby(slackUser)
-		}
-	}
-
-	return diff
 }
 
 func message(text string, emoji string, attachments ...slack.Attachment) error {
@@ -256,14 +166,4 @@ func message(text string, emoji string, attachments ...slack.Attachment) error {
 	)
 
 	return err
-}
-
-type NameChange struct {
-	Slacker slack.User
-	From    string
-	To      string
-}
-
-func (nc NameChange) String() string {
-	return fmt.Sprintf("%s changed their handle from %s to %s", nc.Slacker.RealName, nc.From, nc.To)
 }

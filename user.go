@@ -26,7 +26,8 @@ func (user User) Update() error {
 			real_name = :real_name,
 			display_name = :display_name,
 			avatar = :avatar,
-			deleted = :deleted
+			deleted = :deleted,
+			deleted_at = :deleted_at
 		WHERE
 		  id = :id
 	`, user)
@@ -46,13 +47,26 @@ func (user User) Bury() error {
 		return err
 	}
 
+	user.Deleted = true
 	user.DeletedAt = pq.NullTime{Time: time.Now(), Valid: true}
 
-	_, err = db.NamedExec(`
-		UPDATE users SET
-		  deleted = true,
-			deleted_at = :deleted_at
-		WHERE id = :id`, user)
+	err = user.Update()
+
+	return err
+}
+
+func (user User) ChangeName(newName string) error {
+	text := fmt.Sprintf("%s changed their handle from %s to %s", user.SomeName(), user.DisplayName, newName)
+
+	err := message(text, ":name_badge:")
+
+	if err != nil {
+		return err
+	}
+
+	user.DisplayName = newName
+
+	err = user.Update()
 
 	return err
 }
@@ -122,11 +136,15 @@ func createUser(slacker slack.User) (User, error) {
 	user := fromSlacker(slacker)
 	user.CreatedAt = time.Now()
 
+	if user.Deleted {
+		user.DeletedAt = pq.NullTime{Time: time.Now(), Valid: true}
+	}
+
 	_, err := db.NamedExec(`
 		INSERT INTO users
-		(id, name, real_name, display_name, avatar, deleted, created_at)
+		(id, name, real_name, display_name, avatar, deleted, deleted_at, created_at)
 		VALUES
-		(:id, :name, :real_name, :display_name, :avatar, :deleted, :created_at)
+		(:id, :name, :real_name, :display_name, :avatar, :deleted, :deleted_at, :created_at)
 		`, user)
 
 	return user, err
@@ -141,4 +159,29 @@ func fromSlacker(slacker slack.User) User {
 		Deleted:     slacker.Deleted,
 		Avatar:      slacker.Profile.ImageOriginal,
 	}
+}
+
+func registerAndAnnounceBabies(babies []slack.User) error {
+	for _, baby := range babies {
+		user, err := createUser(baby)
+
+		if err != nil {
+			return err
+		}
+
+		text := ""
+		if baby.Deleted {
+			text = "I'm sorry for your loss, %s was stillborn"
+		} else {
+			text = "Congratulations, you have a beautiful new baby named %s"
+		}
+
+		err = message(fmt.Sprintf(text, user.SomeName()), ":baby:")
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
