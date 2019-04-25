@@ -17,6 +17,7 @@ Use bin/build_lambda.sh to package for lambda, then upload zip. TODO: Use aws cl
 automatically
 
 ## Todo
+- [ ] fix avatars, I think original image only exists sometimes
 - [ ] pagination, or at least warn on getting close to 1000 users (page limit I think)
 - [x] scripted aws deploys
 - [x] sentry integration
