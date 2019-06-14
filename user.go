@@ -15,6 +15,7 @@ type User struct {
 	DisplayName string      `db:"display_name"`
 	Name        string      `db:"name"`
 	Avatar      string      `db:"avatar"`
+	Status      string      `db:"status"`
 	CreatedAt   time.Time   `db:"created_at"`
 	DeletedAt   pq.NullTime `db:"deleted_at"`
 }
@@ -27,7 +28,8 @@ func (user User) Update() error {
 			display_name = :display_name,
 			avatar = :avatar,
 			deleted = :deleted,
-			deleted_at = :deleted_at
+			deleted_at = :deleted_at,
+			status = :status
 		WHERE
 		  id = :id
 	`, user)
@@ -65,6 +67,22 @@ func (user User) ChangeName(newName string) error {
 	}
 
 	user.DisplayName = newName
+
+	err = user.Update()
+
+	return err
+}
+
+func (user User) ChangeStatus(newStatus string) error {
+	text := fmt.Sprintf("%s changed their status from %s to %s", user.SomeName(), user.Status, newStatus)
+
+	err := message(text, ":thought_balloon:")
+
+	if err != nil {
+		return err
+	}
+
+	user.Status = newStatus
 
 	err = user.Update()
 
@@ -142,9 +160,9 @@ func createUser(slacker slack.User) (User, error) {
 
 	_, err := db.NamedExec(`
 		INSERT INTO users
-		(id, name, real_name, display_name, avatar, deleted, deleted_at, created_at)
+		(id, name, real_name, display_name, avatar, deleted, deleted_at, created_at, status)
 		VALUES
-		(:id, :name, :real_name, :display_name, :avatar, :deleted, :deleted_at, :created_at)
+		(:id, :name, :real_name, :display_name, :avatar, :deleted, :deleted_at, :created_at, :status)
 		`, user)
 
 	return user, err
@@ -158,6 +176,7 @@ func fromSlacker(slacker slack.User) User {
 		DisplayName: slacker.Profile.DisplayName,
 		Deleted:     slacker.Deleted,
 		Avatar:      slacker.Profile.ImageOriginal,
+		Status:      fmt.Sprintf("%s %s", slacker.Profile.StatusEmoji, slacker.Profile.StatusText),
 	}
 }
 

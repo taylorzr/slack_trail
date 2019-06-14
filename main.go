@@ -153,6 +153,14 @@ func runIteration() error {
 		}
 	}
 
+	for _, sc := range change.StatusChanges {
+		err := sc.User.ChangeStatus(sc.NewStatus)
+
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 

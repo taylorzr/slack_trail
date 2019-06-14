@@ -19,6 +19,10 @@ automatically
 ## Todo
 - [ ] fix avatars, I think original image only exists sometimes
 - [ ] pagination, or at least warn on getting close to 1000 users (page limit I think)
+- [x] track status
+- [ ] generic update user function, right now we have to add a new function to update like status
+  for example when we start caring about that, we should just mark if there are any changes to a
+  user and update everything
 - [x] scripted aws deploys
 - [x] sentry integration
 
@@ -31,8 +35,9 @@ Expects env vars:
 ### Database creation and setup
 
 ```
-create_db avant_trail
-migrate -path migrations -database $DATABASE_URL up
+brew install golang-migrate
+createdb slack_trail
+migrate -path migrations -database 'postgres://localhost:5432/slack_trail?sslmode=disable' up
 go run . init
 ```
 
@@ -43,8 +48,8 @@ migrate create -seq -dir migrations -ext sql some_file_name
 
 ### Migrate
 ```
-migrate -path migrations -database $DATABASE_URL up
-pg_dump -s avant_trail > structure.sql
+migrate -path migrations -database 'postgres://localhost:5432/slack_trail?sslmode=disable' up
+pg_dump -s slack_trail > structure.sql
 ```
 
 ### Helpers

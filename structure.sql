@@ -2,18 +2,13 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 9.4.11
--- Dumped by pg_dump version 9.6.10
-
 SET statement_timeout = 0;
 SET lock_timeout = 0;
-SET idle_in_transaction_session_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
 SET check_function_bodies = false;
 SET client_min_messages = warning;
-SET row_security = off;
 
 --
 -- Name: plpgsql; Type: EXTENSION; Schema: -; Owner: 
@@ -34,7 +29,7 @@ SET default_tablespace = '';
 SET default_with_oids = false;
 
 --
--- Name: schema_migrations; Type: TABLE; Schema: public; Owner: ztaylo43
+-- Name: schema_migrations; Type: TABLE; Schema: public; Owner: zachtaylor; Tablespace: 
 --
 
 CREATE TABLE public.schema_migrations (
@@ -43,10 +38,10 @@ CREATE TABLE public.schema_migrations (
 );
 
 
-ALTER TABLE public.schema_migrations OWNER TO ztaylo43;
+ALTER TABLE public.schema_migrations OWNER TO zachtaylor;
 
 --
--- Name: users; Type: TABLE; Schema: public; Owner: ztaylo43
+-- Name: users; Type: TABLE; Schema: public; Owner: zachtaylor; Tablespace: 
 --
 
 CREATE TABLE public.users (
@@ -55,15 +50,17 @@ CREATE TABLE public.users (
     real_name character varying(255) NOT NULL,
     avatar character varying(255) NOT NULL,
     deleted boolean NOT NULL,
-    created_at timestamp with time zone NOT NULL,
+    status character varying(255) DEFAULT ''::character varying NOT NULL,
+    display_name character varying(255) DEFAULT ''::character varying NOT NULL,
+    created_at timestamp with time zone DEFAULT '2019-01-01 12:00:00-06'::timestamp with time zone NOT NULL,
     deleted_at timestamp with time zone
 );
 
 
-ALTER TABLE public.users OWNER TO ztaylo43;
+ALTER TABLE public.users OWNER TO zachtaylor;
 
 --
--- Name: schema_migrations schema_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: ztaylo43
+-- Name: schema_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: zachtaylor; Tablespace: 
 --
 
 ALTER TABLE ONLY public.schema_migrations
@@ -71,7 +68,7 @@ ALTER TABLE ONLY public.schema_migrations
 
 
 --
--- Name: users unique_id_on_users; Type: CONSTRAINT; Schema: public; Owner: ztaylo43
+-- Name: unique_id_on_users; Type: CONSTRAINT; Schema: public; Owner: zachtaylor; Tablespace: 
 --
 
 ALTER TABLE ONLY public.users
@@ -79,12 +76,12 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: SCHEMA public; Type: ACL; Schema: -; Owner: ztaylo43
+-- Name: SCHEMA public; Type: ACL; Schema: -; Owner: zachtaylor
 --
 
 REVOKE ALL ON SCHEMA public FROM PUBLIC;
-REVOKE ALL ON SCHEMA public FROM ztaylo43;
-GRANT ALL ON SCHEMA public TO ztaylo43;
+REVOKE ALL ON SCHEMA public FROM zachtaylor;
+GRANT ALL ON SCHEMA public TO zachtaylor;
 GRANT ALL ON SCHEMA public TO PUBLIC;
 
 
