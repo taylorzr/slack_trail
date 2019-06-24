@@ -63,7 +63,7 @@ func randomDisease() string {
 }
 
 func initializeApplication() error {
-	users, err := allUsers()
+	users, err := usersFromDatabase()
 
 	if err != nil {
 		return err
@@ -73,14 +73,14 @@ func initializeApplication() error {
 		return errors.New("I expected the user table to be emtpy but it's not")
 	}
 
-	slackUsers, err := slackClient.GetUsers()
+	slackUsers, err := usersFromSlack()
 
 	if err != nil {
 		return err
 	}
 
 	for _, slackUser := range slackUsers {
-		_, err := createUser(slackUser)
+		_, err := createUser(&slackUser)
 
 		if err != nil {
 			return err
@@ -109,13 +109,13 @@ func runIterationWithSentry() error {
 }
 
 func runIteration() error {
-	slackUsers, err := slackClient.GetUsers()
+	slackUsers, err := usersFromSlack()
 
 	if err != nil {
 		return err
 	}
 
-	knownUsers, err := allUsers()
+	knownUsers, err := usersFromDatabase()
 
 	if err != nil {
 		return err

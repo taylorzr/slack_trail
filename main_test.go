@@ -2,14 +2,12 @@ package main
 
 import (
 	"testing"
-
-	"github.com/nlopes/slack"
 )
 
 func TestNewborn(t *testing.T) {
 	users := []User{}
 
-	slackUsers := []slack.User{{
+	slackUsers := []User{{
 		ID:       "zt",
 		Name:     "zach",
 		RealName: "Zach Taylor",
@@ -31,7 +29,7 @@ func TestCorpse(t *testing.T) {
 		Deleted:  false,
 	}}
 
-	slackUsers := []slack.User{{
+	slackUsers := []User{{
 		ID:       "zt",
 		Name:     "zach",
 		RealName: "Zach Taylor",
@@ -51,7 +49,7 @@ func TestZombie(t *testing.T) {
 		Deleted: true,
 	}}
 
-	slackUsers := []slack.User{{
+	slackUsers := []User{{
 		ID:       "zt",
 		Name:     "zach",
 		RealName: "Zach Taylor",

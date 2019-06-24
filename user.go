@@ -9,6 +9,34 @@ import (
 	"github.com/nlopes/slack"
 )
 
+func usersFromSlack() ([]User, error) {
+	slackers, err := slackClient.GetUsers()
+
+	if err != nil {
+		return nil, err
+	}
+
+	users := []User{}
+
+	for _, slacker := range slackers {
+		users = append(users, fromSlacker(slacker))
+	}
+
+	return users, nil
+}
+
+func usersFromDatabase() ([]User, error) {
+	users := []User{}
+
+	err := db.Select(&users, "SELECT * FROM users")
+
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
 type User struct {
 	ID          string      `db:"id"`
 	Deleted     bool        `db:"deleted"`
@@ -21,7 +49,7 @@ type User struct {
 	DeletedAt   pq.NullTime `db:"deleted_at"`
 }
 
-func (user User) Update() error {
+func (user *User) Update() error {
 	_, err := db.NamedExec(`
     UPDATE users SET
 			name = :name,
@@ -38,7 +66,7 @@ func (user User) Update() error {
 	return err
 }
 
-func (user User) Bury() error {
+func (user *User) Bury() error {
 	text := fmt.Sprintf("After %s, %s died of %s", user.Age(), user.SomeName(), randomDisease())
 
 	err := message(text, ":rip:", slack.Attachment{
@@ -58,7 +86,7 @@ func (user User) Bury() error {
 	return err
 }
 
-func (user User) ChangeName(newName string) error {
+func (user *User) ChangeName(newName string) error {
 	text := fmt.Sprintf("%s changed their handle from %s to %s", user.SomeName(), user.DisplayName, newName)
 
 	err := message(text, ":name_badge:")
@@ -80,7 +108,7 @@ func ignorableStatus(from, to string) bool {
 	return ignorable[from] || ignorable[to]
 }
 
-func (user User) ChangeStatus(newStatus string) error {
+func (user *User) ChangeStatus(newStatus string) error {
 	text := fmt.Sprintf("%s changed their status from %s to %s", user.SomeName(), user.Status, newStatus)
 
 	if ignorableStatus(user.Status, newStatus) {
@@ -100,7 +128,7 @@ func (user User) ChangeStatus(newStatus string) error {
 	return err
 }
 
-func (user User) Necromance() error {
+func (user *User) Necromance() error {
 	text := fmt.Sprintf("%s is back from the dead!", user.SomeName())
 
 	err := message(text, ":zombie:", slack.Attachment{
@@ -121,7 +149,7 @@ func (user User) Necromance() error {
 	return err
 }
 
-func (user User) SomeName() string {
+func (user *User) SomeName() string {
 	if user.RealName == "" {
 		return user.Name
 	} else {
@@ -129,7 +157,7 @@ func (user User) SomeName() string {
 	}
 }
 
-func (user User) Age() time.Duration {
+func (user *User) Age() time.Duration {
 	t := time.Now()
 
 	if user.DeletedAt.Valid {
@@ -141,28 +169,15 @@ func (user User) Age() time.Duration {
 	return duration
 }
 
-func getUser(name string) (User, error) {
+func getUser(name string) (*User, error) {
 	user := User{}
 
 	err := db.Get(&user, "SELECT * from users where name = $1", name)
 
-	return user, err
+	return &user, err
 }
 
-func allUsers() ([]User, error) {
-	users := []User{}
-
-	err := db.Select(&users, "SELECT * FROM users")
-
-	if err != nil {
-		return nil, err
-	}
-
-	return users, nil
-}
-
-func createUser(slacker slack.User) (User, error) {
-	user := fromSlacker(slacker)
+func createUser(user *User) (*User, error) {
 	user.CreatedAt = time.Now()
 
 	if user.Deleted {
@@ -191,9 +206,9 @@ func fromSlacker(slacker slack.User) User {
 	}
 }
 
-func registerAndAnnounceBabies(babies []slack.User) error {
+func registerAndAnnounceBabies(babies []User) error {
 	for _, baby := range babies {
-		user, err := createUser(baby)
+		user, err := createUser(&baby)
 
 		if err != nil {
 			return err

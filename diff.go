@@ -1,11 +1,5 @@
 package main
 
-import (
-	"fmt"
-
-	"github.com/nlopes/slack"
-)
-
 type (
 	NameChange struct {
 		User    User
@@ -18,7 +12,7 @@ type (
 	}
 
 	DiffResult struct {
-		Babies        []slack.User
+		Babies        []User
 		Corpses       []User
 		Zombies       []User
 		NameChanges   []NameChange
@@ -26,7 +20,7 @@ type (
 	}
 )
 
-func (d *DiffResult) AddBaby(user slack.User) {
+func (d *DiffResult) AddBaby(user User) {
 	d.Babies = append(d.Babies, user)
 }
 
@@ -46,7 +40,7 @@ func (d *DiffResult) AddStatusChange(user User, newStatus string) {
 	d.StatusChanges = append(d.StatusChanges, StatusChange{User: user, NewStatus: newStatus})
 }
 
-func diff(users []User, slackUsers []slack.User) DiffResult {
+func diff(users []User, slacker []User) DiffResult {
 	diff := DiffResult{}
 
 	lookup := make(map[string]User)
@@ -55,27 +49,26 @@ func diff(users []User, slackUsers []slack.User) DiffResult {
 		lookup[user.ID] = user
 	}
 
-	for _, slackUser := range slackUsers {
-		if user, ok := lookup[slackUser.ID]; ok {
-			displayName := slackUser.Profile.DisplayName
+	for _, slacker := range slacker {
+		if user, ok := lookup[slacker.ID]; ok {
+			displayName := slacker.DisplayName
 			if displayName != user.DisplayName {
 				diff.AddNameChange(user, displayName)
 			}
 
-			status := fmt.Sprintf("%s %s", slackUser.Profile.StatusEmoji, slackUser.Profile.StatusText)
-			if status != user.Status {
-				diff.AddStatusChange(user, status)
+			if slacker.Status != user.Status {
+				diff.AddStatusChange(user, slacker.Status)
 			}
 
-			if slackUser.Deleted != user.Deleted {
-				if slackUser.Deleted {
+			if slacker.Deleted != user.Deleted {
+				if slacker.Deleted {
 					diff.AddCorpse(user)
 				} else {
 					diff.AddZombie(user)
 				}
 			}
 		} else {
-			diff.AddBaby(slackUser)
+			diff.AddBaby(slacker)
 		}
 	}
 
