@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/lib/pq"
@@ -73,18 +74,28 @@ func (user User) ChangeName(newName string) error {
 	return err
 }
 
+func ignorableStatus(from, to string) bool {
+	ignorable := map[string]bool{":slack_call: On a call": true}
+
+	return ignorable[from] || ignorable[to]
+}
+
 func (user User) ChangeStatus(newStatus string) error {
 	text := fmt.Sprintf("%s changed their status from %s to %s", user.SomeName(), user.Status, newStatus)
 
-	err := message(text, ":thought_balloon:")
+	if ignorableStatus(user.Status, newStatus) {
+		log.Println("Status is spam, not sending slack message...")
+	} else {
+		err := message(text, ":thought_balloon:")
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	user.Status = newStatus
 
-	err = user.Update()
+	err := user.Update()
 
 	return err
 }
