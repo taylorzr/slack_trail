@@ -19,8 +19,9 @@ automatically
 ## Todo
 - [ ] fix avatars, I think original image only exists sometimes
 - [ ] pagination, or at least warn on getting close to 1000 users (page limit I think)
+---
 - [x] track status
-- [ ] generic update user function, right now we have to add a new function to update like status
+- [x] generic update user function, right now we have to add a new function to update like status
   for example when we start caring about that, we should just mark if there are any changes to a
   user and update everything
 - [x] scripted aws deploys
