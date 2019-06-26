@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"math/rand"
@@ -11,6 +10,7 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 	raven "github.com/getsentry/raven-go"
 	"github.com/nlopes/slack"
+	"github.com/pkg/errors"
 )
 
 /*
@@ -66,7 +66,7 @@ func initializeApplication() error {
 	users, err := usersFromDatabase()
 
 	if err != nil {
-		return err
+		return errors.Wrap(err, "fetching users from the database")
 	}
 
 	if len(users) != 0 {
@@ -76,14 +76,14 @@ func initializeApplication() error {
 	slackUsers, err := usersFromSlack()
 
 	if err != nil {
-		return err
+		return errors.Wrap(err, "fetching users from slack")
 	}
 
 	for _, slackUser := range slackUsers {
 		_, err := createUser(&slackUser)
 
 		if err != nil {
-			return err
+			return errors.Wrapf(err, "creating user %#v", slackUser)
 		}
 	}
 
@@ -112,52 +112,67 @@ func runIteration() error {
 	slackUsers, err := usersFromSlack()
 
 	if err != nil {
-		return err
+		return errors.Wrap(err, "fetching users from slack")
 	}
 
 	knownUsers, err := usersFromDatabase()
 
 	if err != nil {
-		return err
+		return errors.Wrap(err, "fetching users from the database")
 	}
 
-	change := diff(knownUsers, slackUsers)
+	err = diff(knownUsers, slackUsers)
 
-	err = registerAndAnnounceBabies(change.Babies)
+	return errors.Wrap(err, "diffing users")
+}
 
-	if err != nil {
-		return err
+func diff(knownUsers, slackUsers []User) error {
+	lookup := make(map[string]User)
+
+	for _, knownUser := range knownUsers {
+		lookup[knownUser.ID] = knownUser
 	}
 
-	for _, corpse := range change.Corpses {
-		err = corpse.Bury()
+	for _, slackUser := range slackUsers {
+		if user, ok := lookup[slackUser.ID]; ok {
+			displayName := slackUser.DisplayName
+			if displayName != user.DisplayName {
+				err := user.ChangeName(slackUser.DisplayName)
 
-		if err != nil {
-			return err
-		}
-	}
+				if err != nil {
+					return errors.Wrap(err, "changing a users name")
+				}
+			}
 
-	for _, zombie := range change.Zombies {
-		err := zombie.Necromance()
+			if slackUser.Status != user.Status {
+				err := user.ChangeStatus(slackUser.Status)
 
-		if err != nil {
-			return err
-		}
-	}
+				if err != nil {
+					return errors.Wrap(err, "updating a users status")
+				}
+			}
 
-	for _, nc := range change.NameChanges {
-		err := nc.User.ChangeName(nc.NewName)
+			if slackUser.Deleted != user.Deleted {
+				if slackUser.Deleted {
+					err := user.Bury()
 
-		if err != nil {
-			return err
-		}
-	}
+					if err != nil {
+						return errors.Wrap(err, "burying a user")
+					}
+				} else {
+					err := user.Necromance()
 
-	for _, sc := range change.StatusChanges {
-		err := sc.User.ChangeStatus(sc.NewStatus)
+					if err != nil {
+						return errors.Wrap(err, "raising a user from the dead")
+					}
+				}
+			}
+		} else {
+			err := registerAndAnnounceBaby(slackUser)
 
-		if err != nil {
-			return err
+			if err != nil {
+				return errors.Wrapf(err, "delivering a new baby user %s", slackUser.DisplayName)
+			}
 		}
 	}
 
@@ -173,5 +188,5 @@ func message(text string, emoji string, attachments ...slack.Attachment) error {
 		slack.MsgOptionAttachments(attachments...),
 	)
 
-	return err
+	return errors.Wrap(err, "sending a slack message")
 }

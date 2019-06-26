@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -9,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/nlopes/slack"
+	"github.com/pkg/errors"
 	cli "gopkg.in/urfave/cli.v1"
 )
 
@@ -31,7 +31,7 @@ func runCLI() {
 			Usage: "initialize application",
 			Action: func(c *cli.Context) error {
 				err := initializeApplication()
-				return err
+				return errors.Wrap(err, "initializing app")
 			},
 		},
 		{
@@ -53,7 +53,7 @@ func runCLI() {
 						result, err := findImages(strings.Join(c.Args(), " "))
 
 						if err != nil {
-							return err
+							return errors.Wrap(err, "finding images")
 						}
 
 						attachments := []slack.Attachment{}
@@ -67,7 +67,7 @@ func runCLI() {
 
 						err = message("Are any of these the new baby amountee?!?", ":frame_with_picture:", attachments...)
 
-						return err
+						return errors.Wrap(err, "sending slack message")
 					},
 				},
 				{
@@ -75,7 +75,7 @@ func runCLI() {
 					Usage: "post test message to slack",
 					Action: func(c *cli.Context) error {
 						err := message("Testing, testing, 123...", ":rip:")
-						return err
+						return errors.Wrap(err, "sending slack message")
 					},
 				},
 			},

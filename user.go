@@ -7,13 +7,14 @@ import (
 
 	"github.com/lib/pq"
 	"github.com/nlopes/slack"
+	"github.com/pkg/errors"
 )
 
 func usersFromSlack() ([]User, error) {
 	slackers, err := slackClient.GetUsers()
 
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "getting slack users")
 	}
 
 	users := []User{}
@@ -31,7 +32,7 @@ func usersFromDatabase() ([]User, error) {
 	err := db.Select(&users, "SELECT * FROM users")
 
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "selecting all users")
 	}
 
 	return users, nil
@@ -63,7 +64,7 @@ func (user *User) Update() error {
 		  id = :id
 	`, user)
 
-	return err
+	return errors.Wrapf(err, "updating user %#v", user)
 }
 
 func (user *User) Bury() error {
@@ -75,7 +76,7 @@ func (user *User) Bury() error {
 	})
 
 	if err != nil {
-		return err
+		return errors.Wrap(err, "sending rip message")
 	}
 
 	user.Deleted = true
@@ -83,7 +84,7 @@ func (user *User) Bury() error {
 
 	err = user.Update()
 
-	return err
+	return errors.Wrap(err, "updating user")
 }
 
 func (user *User) ChangeName(newName string) error {
@@ -92,14 +93,14 @@ func (user *User) ChangeName(newName string) error {
 	err := message(text, ":name_badge:")
 
 	if err != nil {
-		return err
+		return errors.Wrap(err, "sending name change message")
 	}
 
 	user.DisplayName = newName
 
 	err = user.Update()
 
-	return err
+	return errors.Wrap(err, "updating user")
 }
 
 func ignorableStatus(from, to string) bool {
@@ -117,7 +118,7 @@ func (user *User) ChangeStatus(newStatus string) error {
 		err := message(text, ":thought_balloon:")
 
 		if err != nil {
-			return err
+			return errors.Wrap(err, "sending status change message")
 		}
 	}
 
@@ -125,7 +126,7 @@ func (user *User) ChangeStatus(newStatus string) error {
 
 	err := user.Update()
 
-	return err
+	return errors.Wrapf(err, "updating user %s", user.DisplayName)
 }
 
 func (user *User) Necromance() error {
@@ -137,7 +138,7 @@ func (user *User) Necromance() error {
 	})
 
 	if err != nil {
-		return err
+		return errors.Wrap(err, "sending zombie message")
 	}
 
 	_, err = db.NamedExec(`
@@ -146,7 +147,7 @@ func (user *User) Necromance() error {
 			deleted_at = null
 		WHERE id = :id`, user)
 
-	return err
+	return errors.Wrapf(err, "updating user %s to not deleted", user.DisplayName)
 }
 
 func (user *User) SomeName() string {
@@ -174,7 +175,7 @@ func getUser(name string) (*User, error) {
 
 	err := db.Get(&user, "SELECT * from users where name = $1", name)
 
-	return &user, err
+	return &user, errors.Wrapf(err, "get user %s failed", name)
 }
 
 func createUser(user *User) (*User, error) {
@@ -191,7 +192,7 @@ func createUser(user *User) (*User, error) {
 		(:id, :name, :real_name, :display_name, :avatar, :deleted, :deleted_at, :created_at, :status)
 		`, user)
 
-	return user, err
+	return user, errors.Wrapf(err, "inserting user %#v", user)
 }
 
 func fromSlacker(slacker slack.User) User {
@@ -206,27 +207,21 @@ func fromSlacker(slacker slack.User) User {
 	}
 }
 
-func registerAndAnnounceBabies(babies []User) error {
-	for _, baby := range babies {
-		user, err := createUser(&baby)
+func registerAndAnnounceBaby(baby User) error {
+	user, err := createUser(&baby)
 
-		if err != nil {
-			return err
-		}
-
-		text := ""
-		if baby.Deleted {
-			text = "I'm sorry for your loss, %s was stillborn"
-		} else {
-			text = "Congratulations, you have a beautiful new baby named %s"
-		}
-
-		err = message(fmt.Sprintf(text, user.SomeName()), ":baby:")
-
-		if err != nil {
-			return err
-		}
+	if err != nil {
+		return errors.Wrapf(err, "creating user %#v", baby)
 	}
 
-	return nil
+	text := ""
+	if baby.Deleted {
+		text = "I'm sorry for your loss, %s was stillborn"
+	} else {
+		text = "Congratulations, you have a beautiful new baby named %s"
+	}
+
+	err = message(fmt.Sprintf(text, user.SomeName()), ":baby:")
+
+	return errors.Wrap(err, "sending message")
 }
