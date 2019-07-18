@@ -104,7 +104,13 @@ func (user *User) ChangeName(newName string) error {
 }
 
 func ignorableStatus(from, to string) bool {
-	ignorable := map[string]bool{":slack_call: On a call": true}
+	ignorable := map[string]bool{
+		":slack_call: On a call":               true,
+		":spiral_calendar_pad: In a meeting":   true,
+		":bus: Commuting":                      true,
+		":palm_tree: Vacationing":              true,
+		":house_with_garden: Working remotely": true,
+	}
 
 	return ignorable[from] || ignorable[to]
 }
