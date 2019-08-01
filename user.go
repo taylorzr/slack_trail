@@ -46,6 +46,7 @@ type User struct {
 	Name        string      `db:"name"`
 	Avatar      string      `db:"avatar"`
 	Status      string      `db:"status"`
+	Title       string      `db:"title"`
 	CreatedAt   time.Time   `db:"created_at"`
 	DeletedAt   pq.NullTime `db:"deleted_at"`
 }
@@ -59,7 +60,8 @@ func (user *User) Update() error {
 			avatar = :avatar,
 			deleted = :deleted,
 			deleted_at = :deleted_at,
-			status = :status
+			status = :status,
+			title = :title
 		WHERE
 		  id = :id
 	`, user)
@@ -135,6 +137,22 @@ func (user *User) ChangeStatus(newStatus string) error {
 	return errors.Wrapf(err, "updating user %s", user.DisplayName)
 }
 
+func (user *User) ChangeTitle(newTitle string) error {
+	text := fmt.Sprintf("%s changed their title from %s to %s", user.SomeName(), user.Title, newTitle)
+
+	err := message(text, ":name_badge:")
+
+	if err != nil {
+		return errors.Wrap(err, "sending title change message")
+	}
+
+	user.Title = newTitle
+
+	err = user.Update()
+
+	return errors.Wrapf(err, "updating user %s", user.Title)
+}
+
 func (user *User) Necromance() error {
 	text := fmt.Sprintf("%s is back from the dead!", user.SomeName())
 
@@ -193,9 +211,9 @@ func createUser(user *User) (*User, error) {
 
 	_, err := db.NamedExec(`
 		INSERT INTO users
-		(id, name, real_name, display_name, avatar, deleted, deleted_at, created_at, status)
+		(id, name, real_name, display_name, avatar, deleted, deleted_at, created_at, status, title)
 		VALUES
-		(:id, :name, :real_name, :display_name, :avatar, :deleted, :deleted_at, :created_at, :status)
+		(:id, :name, :real_name, :display_name, :avatar, :deleted, :deleted_at, :created_at, :status, :title)
 		`, user)
 
 	return user, errors.Wrapf(err, "inserting user %#v", user)
@@ -210,6 +228,7 @@ func fromSlacker(slacker slack.User) User {
 		Deleted:     slacker.Deleted,
 		Avatar:      slacker.Profile.ImageOriginal,
 		Status:      fmt.Sprintf("%s %s", slacker.Profile.StatusEmoji, slacker.Profile.StatusText),
+		Title:       slacker.Profile.Title,
 	}
 }
 

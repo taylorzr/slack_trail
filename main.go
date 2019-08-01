@@ -152,6 +152,14 @@ func diff(knownUsers, slackUsers []User) error {
 				}
 			}
 
+			if slackUser.Title != user.Title {
+				err := user.ChangeTitle(slackUser.Title)
+
+				if err != nil {
+					return errors.Wrap(err, "updating a users status")
+				}
+			}
+
 			if slackUser.Deleted != user.Deleted {
 				if slackUser.Deleted {
 					err := user.Bury()

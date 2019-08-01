@@ -49,8 +49,12 @@ migrate create -seq -dir migrations -ext sql some_file_name
 
 ### Migrate
 ```
+# dev
 migrate -path migrations -database 'postgres://localhost:5432/slack_trail?sslmode=disable' up
 pg_dump -s slack_trail > structure.sql
+
+# prod
+migrate -path migrations -database "$PROD_DATABASE_URL" up
 ```
 
 ### Helpers

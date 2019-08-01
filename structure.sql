@@ -53,7 +53,8 @@ CREATE TABLE public.users (
     status character varying(255) DEFAULT ''::character varying NOT NULL,
     display_name character varying(255) DEFAULT ''::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT '2019-01-01 12:00:00-06'::timestamp with time zone NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    title character varying(255) DEFAULT ''::character varying NOT NULL
 );
 
 
