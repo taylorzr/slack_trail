@@ -1,4 +1,4 @@
-module github.com/taylorzr/trail
+module github.com/code/slack_trail
 
 require (
 	github.com/aws/aws-lambda-go v1.8.1

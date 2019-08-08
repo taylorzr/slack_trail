@@ -19,6 +19,8 @@ automatically
 ## Todo
 - [ ] fix avatars, I think original image only exists sometimes
 - [ ] pagination, or at least warn on getting close to 1000 users (page limit I think)
+- [ ] document emoji
+- [ ] document sls commands
 ---
 - [x] track status
 - [x] generic update user function, right now we have to add a new function to update like status
@@ -32,6 +34,7 @@ Expects env vars:
 - DATABASE_URL (currently using elephantsql db)
 - SLACK_TOKEN
 - SLACK_CHANNEL_ID
+- SENTRY_DSN
 
 ### Database creation and setup
 
@@ -39,7 +42,8 @@ Expects env vars:
 brew install golang-migrate
 createdb slack_trail
 migrate -path migrations -database 'postgres://localhost:5432/slack_trail?sslmode=disable' up
-go run . init
+cd users && go run . init
+cd emoji && go run . init
 ```
 
 ### New migration
@@ -58,4 +62,7 @@ migrate -path migrations -database "$PROD_DATABASE_URL" up
 ```
 
 ### Helpers
-curl -H "Authorization: Bearer $SLACK_TOKEN" https://slack.com/api/users.list | jq
+```
+curl -sH "Authorization: Bearer $SLACK_TOKEN" https://slack.com/api/users.list | jq .
+curl -sH "Authorization: Bearer $SLACK_TOKEN" https://slack.com/api/emoji.list | jq .
+```

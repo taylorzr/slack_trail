@@ -29,6 +29,18 @@ SET default_tablespace = '';
 SET default_with_oids = false;
 
 --
+-- Name: emojis; Type: TABLE; Schema: public; Owner: zachtaylor; Tablespace: 
+--
+
+CREATE TABLE public.emojis (
+    name character varying(255) NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+ALTER TABLE public.emojis OWNER TO zachtaylor;
+
+--
 -- Name: schema_migrations; Type: TABLE; Schema: public; Owner: zachtaylor; Tablespace: 
 --
 
@@ -74,6 +86,14 @@ ALTER TABLE ONLY public.schema_migrations
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT unique_id_on_users UNIQUE (id);
+
+
+--
+-- Name: unique_name_on_emojis; Type: CONSTRAINT; Schema: public; Owner: zachtaylor; Tablespace: 
+--
+
+ALTER TABLE ONLY public.emojis
+    ADD CONSTRAINT unique_name_on_emojis UNIQUE (name);
 
 
 --
