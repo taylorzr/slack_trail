@@ -7,8 +7,8 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
-	"github.com/nlopes/slack"
 	"github.com/pkg/errors"
+	"github.com/slack-go/slack"
 )
 
 func usersFromMononym() ([]User, error) {

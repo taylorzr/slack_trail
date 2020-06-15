@@ -10,8 +10,8 @@ import (
 
 	"github.com/aws/aws-lambda-go/lambda"
 	raven "github.com/getsentry/raven-go"
-	"github.com/nlopes/slack"
 	"github.com/pkg/errors"
+	"github.com/slack-go/slack"
 )
 
 /*

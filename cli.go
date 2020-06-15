@@ -45,6 +45,13 @@ func runCLI() {
 			},
 		},
 		{
+			Name:  "mononym",
+			Usage: "check for mononym changes",
+			Action: func(c *cli.Context) error {
+				return runMononymIteration()
+			},
+		},
+		{
 			Name:  "test",
 			Usage: "manual testing",
 			Action: func(c *cli.Context) error {
