@@ -5,8 +5,6 @@ import (
 	"log"
 	"math/rand"
 	"os"
-	"regexp"
-	"strings"
 	"time"
 
 	"github.com/aws/aws-lambda-go/lambda"
@@ -198,7 +196,7 @@ func runMononymIteration() error {
 
 	for _, user := range users {
 		usersLookup[user.ID] = true
-		if !IsMononym(user.DisplayName) {
+		if !user.IsMononym() {
 			fmt.Printf("- %s\n", user.DisplayName)
 		}
 	}
@@ -211,23 +209,13 @@ func runMononymIteration() error {
 
 	new := []User{}
 	for _, user := range users {
-		if !usersLookup[user.ID] && !user.Deleted && IsMononym(user.DisplayName) {
+		if !usersLookup[user.ID] && !user.Deleted && user.IsMononym() {
 			fmt.Printf("+ %s\n", user.DisplayName)
 			new = append(new, user)
 		}
 	}
 
 	return nil
-}
-
-func IsMononym(name string) bool {
-	// TODO: regex for \w{3}\d{2}[evs]
-	// e -> employee?
-	// v -> vendor?
-	// s -> bot?
-	// TODO: Check for first && last name within
-	regex := regexp.MustCompile(`^\w{3}\d{2}[evs]$`)
-	return name != "" && !strings.ContainsAny(name, " .") && !regex.Match([]byte(name))
 }
 
 func diffUsers(knownUsers, slackUsers []User) error {

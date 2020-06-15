@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"log"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -79,6 +81,35 @@ type User struct {
 	DeletedAt   pq.NullTime `db:"deleted_at"`
 	Admin       bool        `db:"admin"`
 	Bot         bool        `db:"bot"`
+}
+
+func (user *User) IsMononym() bool {
+	usernameRegex := regexp.MustCompile(`^\w{3}\d{2}[evs]$`)
+	return user.DisplayName != "" &&
+		// handle doesn't include space/dot e.g. "zach taylor" or "zach.taylor"
+		!strings.ContainsAny(user.DisplayName, " .") &&
+		// handle is not default username e.g "zrt43e"
+		!usernameRegex.Match([]byte(user.DisplayName)) &&
+		// handle doesn't include full first and last names e.g "zachtaylor"
+		!(strings.Contains(strings.ToLower(user.DisplayName), strings.ToLower(user.FirstName())) &&
+			strings.Contains(strings.ToLower(user.DisplayName), strings.ToLower(user.LastName())))
+}
+
+// TODO: Store first/last from slack directly in db
+func (user *User) FirstName() string {
+	parts := strings.Split(user.RealName, " ")
+	if len(parts) >= 2 {
+		return parts[0]
+	}
+	return ""
+}
+
+func (user *User) LastName() string {
+	parts := strings.Split(user.RealName, " ")
+	if len(parts) >= 2 {
+		return parts[1]
+	}
+	return ""
 }
 
 func (user *User) Update() error {
