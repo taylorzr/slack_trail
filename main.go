@@ -5,6 +5,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -187,24 +188,6 @@ func runUsersIteration() error {
 	return errors.Wrap(err, "diffing users")
 }
 
-func runMononymIterationWithSentry() error {
-	fmt.Println("Starting mononym iteration...")
-	var err error
-
-	raven.CapturePanic(func() {
-		err = runMononymIteration()
-
-		if err != nil {
-			fmt.Printf("Something broke :(\n%s\n", err.Error())
-			raven.CaptureErrorAndWait(err, nil)
-		}
-	}, nil)
-
-	fmt.Println("Finished mononym iteration.")
-
-	return err
-}
-
 func runMononymIteration() error {
 	users, err := usersFromMononym()
 	usersLookup := map[string]bool{}
@@ -215,8 +198,8 @@ func runMononymIteration() error {
 
 	for _, user := range users {
 		usersLookup[user.ID] = true
-		if strings.ContainsAny(user.DisplayName, " .") {
-			fmt.Printf("%s is an imposter!\n", user.DisplayName)
+		if !IsMononym(user.DisplayName) {
+			fmt.Printf("- %s\n", user.DisplayName)
 		}
 	}
 
@@ -228,13 +211,23 @@ func runMononymIteration() error {
 
 	new := []User{}
 	for _, user := range users {
-		if !usersLookup[user.ID] && !user.Deleted && user.DisplayName != "" && !strings.ContainsAny(user.DisplayName, " .") {
+		if !usersLookup[user.ID] && !user.Deleted && IsMononym(user.DisplayName) {
 			fmt.Printf("+ %s\n", user.DisplayName)
 			new = append(new, user)
 		}
 	}
 
 	return nil
+}
+
+func IsMononym(name string) bool {
+	// TODO: regex for \w{3}\d{2}[evs]
+	// e -> employee?
+	// v -> vendor?
+	// s -> bot?
+	// TODO: Check for first && last name within
+	regex := regexp.MustCompile(`^\w{3}\d{2}[evs]$`)
+	return name != "" && !strings.ContainsAny(name, " .") && !regex.Match([]byte(name))
 }
 
 func diffUsers(knownUsers, slackUsers []User) error {

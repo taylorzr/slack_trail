@@ -17,6 +17,9 @@ func usersFromMononym() ([]User, error) {
 		return nil, errors.Wrap(err, "getting mononym users")
 	}
 
+	// NOTE: Lookup users in database because group info only returns ids and we need to look at a
+	// users name. This means mononym is reliant on updates for other functions/lambdas that keep the
+	// database up to date
 	users, err := usersById(group.Members)
 
 	return users, err
@@ -51,10 +54,6 @@ func usersFromDatabase() ([]User, error) {
 
 func usersById(ids []string) ([]User, error) {
 	var users []User
-
-	for i, id := range ids {
-		ids[i] = fmt.Sprintf("'%s'", id)
-	}
 
 	query, args, err := sqlx.In("SELECT * FROM users WHERE id IN (?)", ids)
 
