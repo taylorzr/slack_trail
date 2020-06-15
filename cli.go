@@ -34,14 +34,14 @@ func runCLI() {
 			Name:  "users",
 			Usage: "check for users changes",
 			Action: func(c *cli.Context) error {
-				return withSentry(runUsersIteration)
+				return runUsersIteration()
 			},
 		},
 		{
 			Name:  "emojis",
 			Usage: "check for emoji changes",
 			Action: func(c *cli.Context) error {
-				return withSentry(runEmojisIteration)
+				return runEmojisIteration()
 			},
 		},
 		{

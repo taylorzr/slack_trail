@@ -46,7 +46,10 @@ func main() {
 		case "emojis":
 			lambda.Start(withSentry(runEmojisIteration))
 		default:
-			panic("No command specified. You must configure the lambda with env COMMAND")
+			lambda.Start(func() error {
+				return fmt.Errorf("env LAMBDA is set but no env COMMAND is missing. You must specify a COMMAND!")
+			},
+			)
 		}
 	} else {
 		runCLI()
@@ -126,22 +129,26 @@ func initializeEmojis() error {
 	return nil
 }
 
-func withSentry(f func() error) error {
-	fmt.Println("Starting iteration...")
-	var err error
+func withSentry(f func() error) func() error {
+	function := f
+	return func() error {
 
-	raven.CapturePanic(func() {
-		err = f()
+		fmt.Println("Starting iteration...")
+		var err error
 
-		if err != nil {
-			fmt.Printf("Something broke :(\n%s\n", err.Error())
-			raven.CaptureErrorAndWait(err, nil)
-		}
-	}, nil)
+		raven.CapturePanic(func() {
+			err = function()
 
-	fmt.Println("Finished iteration.")
+			if err != nil {
+				fmt.Printf("Something broke :(\n%s\n", err.Error())
+				raven.CaptureErrorAndWait(err, nil)
+			}
+		}, nil)
 
-	return err
+		fmt.Println("Finished iteration.")
+
+		return err
+	}
 }
 
 func runEmojisIteration() error {

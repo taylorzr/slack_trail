@@ -18,7 +18,7 @@ message is posted to slack for each new/deleted user.
 ### List deployed functions
 
 ```sh
-$ sls deploy list functions
+$ serverless deploy list functions
 ```
 
 
@@ -68,6 +68,12 @@ Optionally, set aws keys for serverless access
 
 - AWS_ACCESS_KEY_ID
 - AWS_SECRET_ACCESS_KEY
+
+### Run locally
+
+```sh
+$ serverless invoke local --function users
+```
 
 ### Using direnv
 
