@@ -38,6 +38,24 @@ func usersFromDatabase() ([]User, error) {
 	return users, nil
 }
 
+func usersById(ids []string) ([]User, error) {
+	var users []User
+
+	for i, id := range ids {
+		ids[i] = fmt.Sprintf("'%s'", id)
+	}
+
+	query, args, err := sqlx.In("SELECT * FROM users WHERE id IN (?)", ids)
+
+	if err != nil {
+		return nil, err
+	}
+
+	err = db.Select(&users, db.Rebind(query), args...)
+
+	return users, errors.Wrap(err, "finding users by id")
+}
+
 type User struct {
 	ID          string      `db:"id"`
 	Deleted     bool        `db:"deleted"`
@@ -49,6 +67,8 @@ type User struct {
 	Title       string      `db:"title"`
 	CreatedAt   time.Time   `db:"created_at"`
 	DeletedAt   pq.NullTime `db:"deleted_at"`
+	Admin       bool        `db:"admin"`
+	Bot         bool        `db:"bot"`
 }
 
 func (user *User) Update() error {
@@ -229,6 +249,8 @@ func fromSlacker(slacker slack.User) User {
 		Avatar:      slacker.Profile.ImageOriginal,
 		Status:      fmt.Sprintf("%s %s", slacker.Profile.StatusEmoji, slacker.Profile.StatusText),
 		Title:       slacker.Profile.Title,
+		Admin:       slacker.IsAdmin,
+		Bot:         slacker.IsBot,
 	}
 }
 

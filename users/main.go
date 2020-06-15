@@ -5,6 +5,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-lambda-go/lambda"
@@ -126,6 +127,56 @@ func runIteration() error {
 	return errors.Wrap(err, "diffing users")
 }
 
+func runMononymIterationWithSentry() error {
+	fmt.Println("Starting mononym iteration...")
+	var err error
+
+	raven.CapturePanic(func() {
+		err = runMononymIteration()
+
+		if err != nil {
+			fmt.Printf("Something broke :(\n%s\n", err.Error())
+			raven.CaptureErrorAndWait(err, nil)
+		}
+	}, nil)
+
+	fmt.Println("Finished mononym iteration.")
+
+	return err
+}
+
+func runMononymIteration() error {
+	users, err := usersFromMononym()
+	usersLookup := map[string]bool{}
+
+	if err != nil {
+		return errors.Wrap(err, "fetching users from slack")
+	}
+
+	for _, user := range users {
+		usersLookup[user.ID] = true
+		if strings.ContainsAny(user.DisplayName, " .") {
+			fmt.Printf("%s is an imposter!\n", user.DisplayName)
+		}
+	}
+
+	users, err = usersFromSlack()
+
+	if err != nil {
+		return errors.Wrap(err, "fetching users from slack")
+	}
+
+	new := []User{}
+	for _, user := range users {
+		if !usersLookup[user.ID] && !user.Deleted && user.DisplayName != "" && !strings.ContainsAny(user.DisplayName, " .") {
+			fmt.Printf("+ %s\n", user.DisplayName)
+			new = append(new, user)
+		}
+	}
+
+	return nil
+}
+
 func diff(knownUsers, slackUsers []User) error {
 	lookup := make(map[string]User)
 
@@ -144,13 +195,14 @@ func diff(knownUsers, slackUsers []User) error {
 				}
 			}
 
-			if slackUser.Status != user.Status {
-				err := user.ChangeStatus(slackUser.Status)
+			// NOTE: This is too spammy
+			// if slackUser.Status != user.Status {
+			// 	err := user.ChangeStatus(slackUser.Status)
 
-				if err != nil {
-					return errors.Wrap(err, "updating a users status")
-				}
-			}
+			// 	if err != nil {
+			// 		return errors.Wrap(err, "updating a users status")
+			// 	}
+			// }
 
 			if slackUser.Title != user.Title {
 				err := user.ChangeTitle(slackUser.Title)

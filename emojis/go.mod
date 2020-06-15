@@ -15,3 +15,5 @@ require (
 	google.golang.org/appengine v1.6.1 // indirect
 	gopkg.in/urfave/cli.v1 v1.20.0
 )
+
+go 1.13

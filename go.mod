@@ -19,3 +19,5 @@ require (
 	golang.org/x/tools v0.0.0-20190315203558-658e28e1e609 // indirect
 	gopkg.in/urfave/cli.v1 v1.20.0
 )
+
+go 1.13

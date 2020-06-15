@@ -27,6 +27,13 @@ func runCLI() {
 			},
 		},
 		{
+			Name:  "mononym",
+			Usage: "run the mononym trail",
+			Action: func(c *cli.Context) error {
+				return runMononymIterationWithSentry()
+			},
+		},
+		{
 			Name:  "init",
 			Usage: "initialize application",
 			Action: func(c *cli.Context) error {
