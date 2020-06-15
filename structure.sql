@@ -53,39 +53,11 @@ CREATE TABLE public.schema_migrations (
 ALTER TABLE public.schema_migrations OWNER TO zachtaylor;
 
 --
--- Name: users; Type: TABLE; Schema: public; Owner: zachtaylor; Tablespace: 
---
-
-CREATE TABLE public.users (
-    id character varying(255) NOT NULL,
-    name character varying(255) NOT NULL,
-    real_name character varying(255) NOT NULL,
-    avatar character varying(255) NOT NULL,
-    deleted boolean NOT NULL,
-    status character varying(255) DEFAULT ''::character varying NOT NULL,
-    display_name character varying(255) DEFAULT ''::character varying NOT NULL,
-    created_at timestamp with time zone DEFAULT '2019-01-01 12:00:00-06'::timestamp with time zone NOT NULL,
-    deleted_at timestamp with time zone,
-    title character varying(255) DEFAULT ''::character varying NOT NULL
-);
-
-
-ALTER TABLE public.users OWNER TO zachtaylor;
-
---
 -- Name: schema_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: zachtaylor; Tablespace: 
 --
 
 ALTER TABLE ONLY public.schema_migrations
     ADD CONSTRAINT schema_migrations_pkey PRIMARY KEY (version);
-
-
---
--- Name: unique_id_on_users; Type: CONSTRAINT; Schema: public; Owner: zachtaylor; Tablespace: 
---
-
-ALTER TABLE ONLY public.users
-    ADD CONSTRAINT unique_id_on_users UNIQUE (id);
 
 
 --

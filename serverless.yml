@@ -57,26 +57,28 @@ package:
 
 functions:
   users:
-    handler: bin/users
+    handler: bin/trail
     events:
       - schedule: rate(1 minute)
     environment:
+      COMMAND: users
+      LAMBDA: true
       DATABASE_URL: ${env:PROD_DATABASE_URL}
       SLACK_TOKEN: ${env:SLACK_TOKEN}
       SLACK_CHANNEL_ID: ${env:PROD_SLACK_CHANNEL_ID}
-      LAMBDA: true
-      SENTRY_DSN: https://6b4e0bae39f948aca63951ed938ebca0:e7bdf3ed265c41659a9983fddfba09f8@sentry.io/1382513
+      SENTRY_DSN: ${env:SENTRY_DSN}
 
   emojis:
-    handler: bin/emojis
+    handler: bin/trail
     events:
       - schedule: rate(1 minute)
     environment:
+      COMMAND: emojis
+      LAMBDA: true
       DATABASE_URL: ${env:PROD_DATABASE_URL}
       SLACK_TOKEN: ${env:SLACK_TOKEN}
       SLACK_CHANNEL_ID: ${env:PROD_SLACK_CHANNEL_ID}
-      LAMBDA: true
-      SENTRY_DSN: https://6b4e0bae39f948aca63951ed938ebca0:e7bdf3ed265c41659a9983fddfba09f8@sentry.io/1382513
+      SENTRY_DSN: ${env:SENTRY_DSN}
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
 #    Check the event documentation for details

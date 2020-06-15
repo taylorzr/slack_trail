@@ -15,23 +15,17 @@ message is posted to slack for each new/deleted user.
 
 ## Packaging
 
-
 ### List deployed functions
 
 ```sh
 $ sls deploy list functions
-Serverless: Listing functions and their last 5 versions:
-Serverless: -------------
-Serverless: users: 2, 3, 4, 5, 6
-Serverless: emojis: $LATEST, 1
 ```
 
 
 ### Deploy all
 
 ```sh
-$ make
-$ serverless deploy
+$ make deploy
 ```
 
 ### Deploy single function
@@ -41,11 +35,12 @@ $ make
 $ serverless deploy function --function users
 ```
 
-## Todo
+## TODO
 
-- [ ] fix avatars, I think original image only exists sometimes
+- [ ] output option, like console instead of slack
+- [ ] diff avatars
+- [ ] diff is_admin
 - [ ] pagination, or at least warn on getting close to 1000 users (page limit I think)
-- [ ] document emoji
 
 ---
 
@@ -56,15 +51,40 @@ $ serverless deploy function --function users
 - [x] scripted aws deploys
 - [x] sentry integration
 - [x] document sls commands
+- [x] document emoji
 
 ## Development
 
 Expects env vars:
 
-- DATABASE_URL (currently using elephantsql db)
 - SLACK_TOKEN
-- SLACK_CHANNEL_ID
 - SENTRY_DSN
+- DATABASE_URL (used for dev)
+- SLACK_CHANNEL_ID (used for dev)
+- PROD_DATABASE_URL
+- PROD_SLACK_CHANNEL_ID
+
+Optionally, set aws keys for serverless access
+
+- AWS_ACCESS_KEY_ID
+- AWS_SECRET_ACCESS_KEY
+
+### Using direnv
+
+```sh
+# .envrc
+
+export DATABASE_URL='postgres://localhost:5432/slack_trail?sslmode=disable'
+export SLACK_CHANNEL_ID='<Some Channel ID>'
+
+export PROD_DATABASE_URL='<prod url>'
+export PROD_SLACK_CHANNEL_ID='<Some Channel ID>'
+
+export SENTRY_DSN='<sentry dsn>'
+
+export AWS_ACCESS_KEY_ID='key'
+export AWS_SECRET_ACCESS_KEY='secret'
+```
 
 ### Database creation and setup
 
@@ -95,7 +115,7 @@ migrate -path migrations -database "$PROD_DATABASE_URL" up
 
 ### Helpers
 
-```
+```sh
 curl -sH "Authorization: Bearer $SLACK_TOKEN" https://slack.com/api/users.list | jq .
 curl -sH "Authorization: Bearer $SLACK_TOKEN" https://slack.com/api/emoji.list | jq .
 curl -sH "Authorization: Bearer $SLACK_TOKEN" https://slack.com/api/users.setPhoto -F image=@"/Users/zachtaylor/Downloads/slack-avatar.jpg"
