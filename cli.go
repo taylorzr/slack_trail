@@ -69,6 +69,13 @@ func runCLI() {
 			},
 		},
 		{
+			Name:  "employees",
+			Usage: "check for employees changes",
+			Action: func(c *cli.Context) error {
+				return runEmployeesIteration()
+			},
+		},
+		{
 			Name:  "test",
 			Usage: "manual testing",
 			Action: func(c *cli.Context) error {
