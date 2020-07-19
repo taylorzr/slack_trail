@@ -10,11 +10,25 @@ import (
 	cli "gopkg.in/urfave/cli.v1"
 )
 
+var verbose bool
+
 func runCLI() {
 	app := cli.NewApp()
 
 	app.Name = "emoji"
 	app.Version = "0.1"
+
+	app.Flags = []cli.Flag{
+		&cli.BoolFlag{
+			Name:  "verbose",
+			Usage: "more cowbell",
+		},
+	}
+
+	app.Before = func(c *cli.Context) error {
+		verbose = c.Bool("verbose")
+		return nil
+	}
 
 	app.Commands = []cli.Command{
 		{
@@ -86,6 +100,7 @@ func runCLI() {
 					return err
 				}
 
+				fmt.Println("Finding all employees...")
 				peeps := GetAllReports(browser, root, []*Person{}, []int{})
 
 				lookup := map[string]*Person{}

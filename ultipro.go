@@ -57,7 +57,9 @@ type PersonWithReports struct {
 }
 
 func GetAllReports(browser *http.Client, person *PersonWithReports, people []*Person, indexes []int) []*Person {
-	fmt.Println(person.Name, person.DirectReportCount, indexes, len(people))
+	if verbose {
+		fmt.Println(person.Name, person.Title, person.DirectReportCount, indexes, len(people))
+	}
 
 	people = append(people, &Person{person.ID, person.Name, person.DirectReportCount, person.SupervisorID})
 
