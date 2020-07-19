@@ -90,6 +90,9 @@ export SENTRY_DSN='<sentry dsn>'
 
 export AWS_ACCESS_KEY_ID='key'
 export AWS_SECRET_ACCESS_KEY='secret'
+
+# Makes psql connect to slack_trail database by default
+export PGDATABASE='slack_trail'
 ```
 
 ### Database creation and setup

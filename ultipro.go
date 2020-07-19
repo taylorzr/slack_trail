@@ -14,19 +14,12 @@ import (
 	"golang.org/x/net/publicsuffix"
 )
 
-type Person struct {
-	ID           string
-	Name         string
-	ReportsCount int
-	SupervisorID string
-}
-
-type PersonWithReports struct {
-	ID                string              `json:"employeeId"`
-	Name              string              `json:"employeeName"`
-	SupervisorID      string              `json:"supervisorId"`
-	DirectReportCount int                 `json:"directReportCount"`
-	Reports           []PersonWithReports `json:"children"`
+type EmployeeWithReports struct {
+	ID                string                `json:"employeeId"`
+	Name              string                `json:"employeeName"`
+	SupervisorID      string                `json:"supervisorId"`
+	DirectReportCount int                   `json:"directReportCount"`
+	Reports           []EmployeeWithReports `json:"children"`
 	// Supervisors                       []interface{}       `json:"supervisors"`
 	// Collapsed                         bool                `json:"collapsed"`
 	// CompanyID                         string              `json:"companyId"`
@@ -49,27 +42,49 @@ type PersonWithReports struct {
 	// 	DropdownValues interface{} `json:"dropdownValues"`
 	// 	Section        interface{} `json:"section"`
 	// 	TemplateName   string      `json:"templateName"`
-	// 	Title          string      `json:"title"`
+	//	Title          string      `json:"title"`
 	// 	ValueSelected  interface{} `json:"valueSelected"`
 	// 	Values         []string    `json:"values"`
 	// } `json:"thumbnailFields"`
 	// Top int `json:"top"`
 }
 
-func GetAllReports(browser *http.Client, person *PersonWithReports, people []*Person, indexes []int) []*Person {
-	if verbose {
-		fmt.Println(person.Name, person.Title, person.DirectReportCount, indexes, len(people))
+func GetAllEmployees() ([]*Employee, error) {
+	browser, err := Login()
+
+	if err != nil {
+		return nil, err
 	}
 
-	people = append(people, &Person{person.ID, person.Name, person.DirectReportCount, person.SupervisorID})
+	// Adam's ID
+	root, err := GetDirectReports(browser, "BY4GHG02C0K0")
+
+	if err != nil {
+		return nil, err
+	}
+
+	return GetAllReports(browser, root, []*Employee{}, []int{})
+}
+
+func GetAllReports(browser *http.Client, person *EmployeeWithReports, people []*Employee, indexes []int) ([]*Employee, error) {
+	if verbose {
+		fmt.Println(person.Name, person.DirectReportCount, indexes, len(people))
+	}
+
+	people = append(people, &Employee{
+		ID:           person.ID,
+		Name:         person.Name,
+		ReportsCount: person.DirectReportCount,
+		SupervisorID: person.SupervisorID},
+	)
 
 	if person.DirectReportCount == 0 {
-		return people
+		return people, nil
 	}
 
 	root, err := GetDirectReports(browser, person.ID)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	// Listing a users reports still returns the root
@@ -79,10 +94,14 @@ func GetAllReports(browser *http.Client, person *PersonWithReports, people []*Pe
 	}
 
 	for i, p := range root.Reports {
-		people = GetAllReports(browser, &p, people, append(indexes, i))
+		people, err = GetAllReports(browser, &p, people, append(indexes, i))
+
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	return people
+	return people, nil
 }
 
 func Login() (*http.Client, error) {
@@ -153,7 +172,7 @@ func Login() (*http.Client, error) {
 	return browser, nil
 }
 
-func GetDirectReports(browser *http.Client, employeeID string) (*PersonWithReports, error) {
+func GetDirectReports(browser *http.Client, employeeID string) (*EmployeeWithReports, error) {
 	req, err := http.NewRequest("GET", fmt.Sprintf("https://nw11.ultipro.com/services/OrganizationWebService.svc/OrgHierarchy?coid=ZGFMI&eeid=%s&_=1594948614950", employeeID), nil)
 
 	if err != nil {
@@ -169,7 +188,7 @@ func GetDirectReports(browser *http.Client, employeeID string) (*PersonWithRepor
 	}
 
 	data := struct {
-		OrgChart PersonWithReports `json:"orgChart"`
+		OrgChart EmployeeWithReports `json:"orgChart"`
 	}{}
 
 	err = json.NewDecoder(resp.Body).Decode(&data)

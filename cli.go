@@ -35,13 +35,16 @@ func runCLI() {
 			Name:  "init",
 			Usage: "initialize application",
 			Action: func(c *cli.Context) error {
-				err := initializeUsers()
-				if err != nil {
-					return errors.Wrap(err, "initializing users")
-				}
+				// err := initializeUsers()
+				// if err != nil {
+				// 	return errors.Wrap(err, "initializing users")
+				// }
 
-				err = initializeEmojis()
-				return errors.Wrap(err, "initializing emojis")
+				// err = initializeEmojis()
+				// return errors.Wrap(err, "initializing emojis")
+
+				err := initializeEmployees()
+				return errors.Wrap(err, "initializing employees")
 			},
 		},
 		{
@@ -87,23 +90,12 @@ func runCLI() {
 			Name:  "org",
 			Usage: "list employees according to ultipro",
 			Action: func(c *cli.Context) error {
-				browser, err := Login()
-
+				peeps, err := GetAllEmployees()
 				if err != nil {
 					return err
 				}
 
-				// Adam's ID
-				root, err := GetDirectReports(browser, "BY4GHG02C0K0")
-
-				if err != nil {
-					return err
-				}
-
-				fmt.Println("Finding all employees...")
-				peeps := GetAllReports(browser, root, []*Person{}, []int{})
-
-				lookup := map[string]*Person{}
+				lookup := map[string]*Employee{}
 
 				for _, p := range peeps {
 					lookup[p.ID] = p
