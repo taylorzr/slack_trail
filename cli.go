@@ -69,6 +69,47 @@ func runCLI() {
 				},
 			},
 		},
+		{
+			Name:  "org",
+			Usage: "list employees according to ultipro",
+			Action: func(c *cli.Context) error {
+				browser, err := Login()
+
+				if err != nil {
+					return err
+				}
+
+				// Adam's ID
+				root, err := GetDirectReports(browser, "BY4GHG02C0K0")
+
+				if err != nil {
+					return err
+				}
+
+				peeps := GetAllReports(browser, root, []*Person{}, []int{})
+
+				lookup := map[string]*Person{}
+
+				for _, p := range peeps {
+					lookup[p.ID] = p
+				}
+
+				for _, p := range peeps {
+					supervisor := lookup[p.SupervisorID]
+
+					boss := "unknown"
+
+					if supervisor != nil {
+						boss = supervisor.Name
+					}
+					fmt.Println(p.Name, boss)
+				}
+
+				fmt.Println("Total:", len(peeps))
+
+				return nil
+			},
+		},
 	}
 
 	sort.Sort(cli.FlagsByName(app.Flags))
