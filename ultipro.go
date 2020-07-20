@@ -93,6 +93,10 @@ func GetAllReports(browser *http.Client, person *EmployeeWithReports, people []*
 		root = &root.Reports[n]
 	}
 
+	if root.ID != person.ID {
+		return nil, fmt.Errorf("Processing %s(%s), expected to find self at %v indexes but found %s(%s) instead", person.Name, person.ID, indexes, root.Name, root.ID)
+	}
+
 	for i, p := range root.Reports {
 		people, err = GetAllReports(browser, &p, people, append(indexes, i))
 

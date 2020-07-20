@@ -61,6 +61,8 @@ Expects env vars:
 - SENTRY_DSN
 - DATABASE_URL (used for dev)
 - SLACK_CHANNEL_ID (used for dev)
+- ULTIPRO_USERNAME
+- ULTIPRO_PASSWORD
 - PROD_DATABASE_URL
 - PROD_SLACK_CHANNEL_ID
 
@@ -91,6 +93,9 @@ export SENTRY_DSN='<sentry dsn>'
 export AWS_ACCESS_KEY_ID='key'
 export AWS_SECRET_ACCESS_KEY='secret'
 
+export ULTIPRO_USERNAME='<username>'
+export ULTIPRO_PASSWORD='<password>'
+
 # Makes psql connect to slack_trail database by default
 export PGDATABASE='slack_trail'
 ```
@@ -100,9 +105,8 @@ export PGDATABASE='slack_trail'
 ```sh
 brew install golang-migrate
 createdb slack_trail
-migrate -path migrations -database 'postgres://localhost:5432/slack_trail?sslmode=disable' up
-cd users && go run . init
-cd emoji && go run . init
+migrate -path migrations -database "$DATABASE_URL" up
+go run . init
 ```
 
 ### New migration

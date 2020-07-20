@@ -15,7 +15,7 @@ var verbose bool
 func runCLI() {
 	app := cli.NewApp()
 
-	app.Name = "emoji"
+	app.Name = "trail"
 	app.Version = "0.1"
 
 	app.Flags = []cli.Flag{
@@ -91,37 +91,6 @@ func runCLI() {
 						return errors.Wrap(err, "sending slack message")
 					},
 				},
-			},
-		},
-		{
-			Name:  "org",
-			Usage: "list employees according to ultipro",
-			Action: func(c *cli.Context) error {
-				peeps, err := GetAllEmployees()
-				if err != nil {
-					return err
-				}
-
-				lookup := map[string]*Employee{}
-
-				for _, p := range peeps {
-					lookup[p.ID] = p
-				}
-
-				for _, p := range peeps {
-					supervisor := lookup[p.SupervisorID]
-
-					boss := "unknown"
-
-					if supervisor != nil {
-						boss = supervisor.Name
-					}
-					fmt.Println(p.Name, boss)
-				}
-
-				fmt.Println("Total:", len(peeps))
-
-				return nil
 			},
 		},
 	}

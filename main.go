@@ -37,6 +37,8 @@ func init() {
 	slackClient = slack.New(os.Getenv("SLACK_TOKEN"))
 }
 
+// FIXME: Should just move these to cli instead of having to remember to setup and iteration in 2
+// places
 func main() {
 	if _, exists := os.LookupEnv("LAMBDA"); exists {
 		switch os.Getenv("COMMAND") {
@@ -44,6 +46,8 @@ func main() {
 			lambda.Start(withSentry(runUsersIteration))
 		case "emojis":
 			lambda.Start(withSentry(runEmojisIteration))
+		case "employees":
+			lambda.Start(withSentry(runEmployeesIteration))
 		default:
 			lambda.Start(func() error {
 				return fmt.Errorf("env LAMBDA is set but no env COMMAND is missing. You must specify a COMMAND!")

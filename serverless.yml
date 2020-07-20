@@ -79,6 +79,21 @@ functions:
       SLACK_TOKEN: ${env:SLACK_TOKEN}
       SLACK_CHANNEL_ID: ${env:PROD_SLACK_CHANNEL_ID}
       SENTRY_DSN: ${env:SENTRY_DSN}
+
+  employees:
+    handler: bin/trail
+    events:
+      - schedule: rate(1 day)
+    environment:
+      COMMAND: employees
+      LAMBDA: true
+      DATABASE_URL: ${env:PROD_DATABASE_URL}
+      SLACK_TOKEN: ${env:SLACK_TOKEN}
+      SLACK_CHANNEL_ID: ${env:PROD_SLACK_CHANNEL_ID}
+      SENTRY_DSN: ${env:SENTRY_DSN}
+      ULTIPRO_USERNAME: ${env:ULTIPRO_USERNAME}
+      ULTIPRO_PASSWORD: ${env:ULTIPRO_PASSWORD}
+
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
 #    Check the event documentation for details
