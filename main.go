@@ -41,7 +41,13 @@ func init() {
 // places
 func main() {
 	if _, exists := os.LookupEnv("LAMBDA"); exists {
-		switch os.Getenv("COMMAND") {
+		command, exists := os.LookupEnv("COMMAND")
+		if !exists {
+			lambda.Start(func() error {
+				return fmt.Errorf("You must specify an env COMMAND")
+			})
+		}
+		switch command {
 		case "users":
 			lambda.Start(withSentry(runUsersIteration))
 		case "emojis":
@@ -50,9 +56,8 @@ func main() {
 			lambda.Start(withSentry(runEmployeesIteration))
 		default:
 			lambda.Start(func() error {
-				return fmt.Errorf("env LAMBDA is set but no env COMMAND is missing. You must specify a COMMAND!")
-			},
-			)
+				return fmt.Errorf("Command %s is not supported", command)
+			})
 		}
 	} else {
 		runCLI()
