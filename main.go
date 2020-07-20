@@ -5,12 +5,14 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"sort"
 	"time"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/getsentry/raven-go"
 	"github.com/pkg/errors"
 	"github.com/slack-go/slack"
+	"github.com/urfave/cli"
 )
 
 /*
@@ -29,6 +31,8 @@ recently deleted. Announce them as a deleted user, and update their deleted stat
 var (
 	slackChannelID string
 	slackClient    *slack.Client
+	verbose        bool
+	aws            bool
 )
 
 func init() {
@@ -37,30 +41,129 @@ func init() {
 	slackClient = slack.New(os.Getenv("SLACK_TOKEN"))
 }
 
-// FIXME: Should just move these to cli instead of having to remember to setup and iteration in 2
-// places
 func main() {
+	app := cli.NewApp()
+
+	app.Name = "trail"
+	app.Version = "0.1"
+
+	app.Flags = []cli.Flag{
+		&cli.BoolFlag{
+			Name:  "verbose",
+			Usage: "more cowbell",
+		},
+	}
+
+	app.Before = func(c *cli.Context) error {
+		verbose = c.Bool("verbose")
+		return nil
+	}
+
+	app.Commands = []cli.Command{
+		{
+			Name:  "init",
+			Usage: "initialize application",
+			Action: func(c *cli.Context) error {
+				// err := initializeUsers()
+				// if err != nil {
+				// 	return errors.Wrap(err, "initializing users")
+				// }
+
+				// err = initializeEmojis()
+				// return errors.Wrap(err, "initializing emojis")
+
+				err := initializeEmployees()
+				return errors.Wrap(err, "initializing employees")
+			},
+		},
+		{
+			Name:  "users",
+			Usage: "check for users changes",
+			Action: func(c *cli.Context) error {
+				// FIXME: Problem here is aws doesn't call trail with argument
+				// argument is stored in env COMMAND
+				if aws {
+					// FIXME: Report errors?
+					lambda.Start(withSentry(runUsersIteration))
+					return nil
+				} else {
+					return runUsersIteration()
+				}
+			},
+		},
+		{
+			Name:  "emojis",
+			Usage: "check for emoji changes",
+			Action: func(c *cli.Context) error {
+				if aws {
+					// FIXME: Report errors?
+					lambda.Start(withSentry(runEmojisIteration))
+					return nil
+				} else {
+					return runEmojisIteration()
+				}
+			},
+		},
+		{
+			Name:  "mononym",
+			Usage: "check for mononym changes",
+			Action: func(c *cli.Context) error {
+				return runMononymIteration()
+			},
+		},
+		{
+			Name:  "employees",
+			Usage: "check for employees changes",
+			Action: func(c *cli.Context) error {
+				if aws {
+					// FIXME: Report errors?
+					lambda.Start(withSentry(runEmployeesIteration))
+					return nil
+				} else {
+					return runEmployeesIteration()
+				}
+			},
+		},
+		{
+			Name:  "test",
+			Usage: "manual testing",
+			Action: func(c *cli.Context) error {
+				fmt.Println("noop")
+				return nil
+			},
+			Subcommands: []cli.Command{
+				{
+					Name:  "slack",
+					Usage: "post test message to slack",
+					Action: func(c *cli.Context) error {
+						err := message("Testing, testing, 123...", ":rip:")
+						return errors.Wrap(err, "sending slack message")
+					},
+				},
+			},
+		},
+	}
+
+	sort.Sort(cli.FlagsByName(app.Flags))
+	sort.Sort(cli.CommandsByName(app.Commands))
+
 	if _, exists := os.LookupEnv("LAMBDA"); exists {
-		command, exists := os.LookupEnv("COMMAND")
-		if !exists {
-			lambda.Start(func() error {
+		aws = true
+		if _, exists := os.LookupEnv("COMMAND"); !exists {
+			lambda.Start(withSentry(func() error {
 				return fmt.Errorf("You must specify an env COMMAND")
-			})
+			}))
 		}
-		switch command {
-		case "users":
-			lambda.Start(withSentry(runUsersIteration))
-		case "emojis":
-			lambda.Start(withSentry(runEmojisIteration))
-		case "employees":
-			lambda.Start(withSentry(runEmployeesIteration))
-		default:
-			lambda.Start(func() error {
-				return fmt.Errorf("Command %s is not supported", command)
-			})
-		}
-	} else {
-		runCLI()
+	}
+	args := os.Args
+	if aws {
+		args = append(args, os.Getenv("COMMAND"))
+	}
+	fmt.Println(args)
+	err := app.Run(args)
+
+	if err != nil {
+		log.Fatal(err)
 	}
 }
 

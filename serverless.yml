@@ -83,7 +83,7 @@ functions:
   employees:
     handler: bin/trail
     events:
-      - schedule: rate(1 day)
+      - schedule: rate(4 hours)
     environment:
       COMMAND: employees
       LAMBDA: true
@@ -93,6 +93,7 @@ functions:
       SENTRY_DSN: ${env:SENTRY_DSN}
       ULTIPRO_USERNAME: ${env:ULTIPRO_USERNAME}
       ULTIPRO_PASSWORD: ${env:ULTIPRO_PASSWORD}
+    timeout: 45
 
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events

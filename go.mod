@@ -10,6 +10,7 @@ require (
 	github.com/pkg/errors v0.8.1
 	github.com/slack-go/slack v0.6.5
 	github.com/stretchr/testify v1.3.0 // indirect
+	github.com/urfave/cli v1.22.4
 	golang.org/x/net v0.0.0-20200202094626-16171245cfb2
 	google.golang.org/appengine v1.6.1 // indirect
 	gopkg.in/urfave/cli.v1 v1.20.0
