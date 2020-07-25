@@ -56,7 +56,7 @@ func (employee Employee) ChangeSupervisor(newSupervisorID string) error {
 
 	text := fmt.Sprintf("%s's supervisor changed from %s to %s", employee.Name, old.Name, new.Name)
 
-	err = message(text, ":name_badge:")
+	err = sendMessage(text, ":name_badge:")
 
 	if err != nil {
 		return errors.Wrap(err, "sending name change message")

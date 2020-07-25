@@ -133,7 +133,7 @@ func (user *User) Update() error {
 func (user *User) Bury() error {
 	text := fmt.Sprintf("After %s, %s died of %s", user.Age(), user.SomeName(), randomDisease())
 
-	err := message(text, ":rip:", slack.Attachment{
+	err := sendMessage(text, ":rip:", slack.Attachment{
 		ImageURL: user.Avatar,
 		Title:    "",
 	})
@@ -153,7 +153,7 @@ func (user *User) Bury() error {
 func (user *User) ChangeName(newName string) error {
 	text := fmt.Sprintf("%s changed their handle from %s to %s", user.SomeName(), user.DisplayName, newName)
 
-	err := message(text, ":name_badge:")
+	err := sendMessage(text, ":name_badge:")
 
 	if err != nil {
 		return errors.Wrap(err, "sending name change message")
@@ -184,7 +184,7 @@ func (user *User) ChangeStatus(newStatus string) error {
 	if ignorableStatus(user.Status, newStatus) {
 		log.Println("Status is spam, not sending slack message...")
 	} else {
-		err := message(text, ":thought_balloon:")
+		err := sendMessage(text, ":thought_balloon:")
 
 		if err != nil {
 			return errors.Wrap(err, "sending status change message")
@@ -201,7 +201,7 @@ func (user *User) ChangeStatus(newStatus string) error {
 func (user *User) ChangeTitle(newTitle string) error {
 	text := fmt.Sprintf("%s changed their title from %s to %s", user.SomeName(), user.Title, newTitle)
 
-	err := message(text, ":name_badge:")
+	err := sendMessage(text, ":name_badge:")
 
 	if err != nil {
 		return errors.Wrap(err, "sending title change message")
@@ -217,7 +217,7 @@ func (user *User) ChangeTitle(newTitle string) error {
 func (user *User) Necromance() error {
 	text := fmt.Sprintf("%s is back from the dead!", user.SomeName())
 
-	err := message(text, ":zombie:", slack.Attachment{
+	err := sendMessage(text, ":zombie:", slack.Attachment{
 		ImageURL: user.Avatar,
 		Title:    "",
 	})
@@ -309,7 +309,7 @@ func registerAndAnnounceBaby(baby User) error {
 		text = "Congratulations, you have a beautiful new baby named %s"
 	}
 
-	err = message(fmt.Sprintf(text, user.SomeName()), ":baby:")
+	err = sendMessage(fmt.Sprintf(text, user.SomeName()), ":baby:")
 
 	return errors.Wrap(err, "sending message")
 }

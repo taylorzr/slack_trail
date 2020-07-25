@@ -37,13 +37,14 @@ $ serverless deploy function --function users
 
 ## TODO
 
-- [ ] output option, like console instead of slack
+- [ ] more ultipro diffs
 - [ ] diff avatars
 - [ ] diff is_admin
 - [ ] pagination, or at least warn on getting close to 1000 users (page limit I think)
 
 ---
 
+- [x] output option, like console instead of slack
 - [x] track status
 - [x] generic update user function, right now we have to add a new function to update like status
   for example when we start caring about that, we should just mark if there are any changes to a

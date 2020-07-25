@@ -1,4 +1,4 @@
-module github.com/taylorzr/slack_trail/emoji
+module github.com/taylorzr/slack_trail
 
 require (
 	github.com/PuerkitoBio/goquery v1.5.1

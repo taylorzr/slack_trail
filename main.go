@@ -33,6 +33,7 @@ var (
 	slackClient    *slack.Client
 	verbose        bool
 	aws            bool
+	sendMessage    messageFunc
 )
 
 func init() {
@@ -52,10 +53,24 @@ func main() {
 			Name:  "verbose",
 			Usage: "more cowbell",
 		},
+		&cli.StringFlag{
+			Name:  "messenger",
+			Usage: "send messages to stdout or slack",
+			Value: "slack",
+		},
 	}
 
 	app.Before = func(c *cli.Context) error {
 		verbose = c.Bool("verbose")
+		switch c.String("messenger") {
+		case "stdout":
+			sendMessage = messageStdout
+		case "slack":
+			sendMessage = messageSlack
+		default:
+			return fmt.Errorf("unsupported messenger %s", c.String("messenger"))
+		}
+
 		return nil
 	}
 
@@ -64,15 +79,17 @@ func main() {
 			Name:  "init",
 			Usage: "initialize application",
 			Action: func(c *cli.Context) error {
-				// err := initializeUsers()
-				// if err != nil {
-				// 	return errors.Wrap(err, "initializing users")
-				// }
+				err := initializeUsers()
+				if err != nil {
+					return errors.Wrap(err, "initializing users")
+				}
 
-				// err = initializeEmojis()
-				// return errors.Wrap(err, "initializing emojis")
+				err = initializeEmojis()
+				if err != nil {
+					return errors.Wrap(err, "initializing emojis")
+				}
 
-				err := initializeEmployees()
+				err = initializeEmployees()
 				return errors.Wrap(err, "initializing employees")
 			},
 		},
@@ -133,10 +150,10 @@ func main() {
 			},
 			Subcommands: []cli.Command{
 				{
-					Name:  "slack",
-					Usage: "post test message to slack",
+					Name:  "message",
+					Usage: "post test message to the messenger",
 					Action: func(c *cli.Context) error {
-						err := message("Testing, testing, 123...", ":rip:")
+						err := sendMessage("Testing, testing, 123...", ":rip:")
 						return errors.Wrap(err, "sending slack message")
 					},
 				},
@@ -183,7 +200,14 @@ func randomDisease() string {
 	return disease
 }
 
-func message(text string, emoji string, attachments ...slack.Attachment) error {
+type messageFunc func(string, string, ...slack.Attachment) error
+
+func messageStdout(text string, emoji string, attachments ...slack.Attachment) error {
+	fmt.Printf("%s %s\n", emoji, text)
+	return nil
+}
+
+func messageSlack(text string, emoji string, attachments ...slack.Attachment) error {
 	_, _, err := slackClient.PostMessage(
 		slackChannelID,
 		slack.MsgOptionUsername("trail"),

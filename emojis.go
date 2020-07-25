@@ -81,7 +81,7 @@ func diffEmojis(old, new []Emoji) error {
 
 	for _, emoji := range new {
 		if _, ok := oldLookup[emoji.Name]; !ok {
-			message(fmt.Sprintf(":%s:", emoji.Name), ":heavy_plus_sign:")
+			sendMessage(fmt.Sprintf(":%s:", emoji.Name), ":heavy_plus_sign:")
 
 			err := createEmoji(&emoji)
 
@@ -93,7 +93,7 @@ func diffEmojis(old, new []Emoji) error {
 
 	for _, emoji := range old {
 		if _, ok := newLookup[emoji.Name]; !ok {
-			message(fmt.Sprintf(":%s:", emoji.Name), ":heavy_minus_sign:")
+			sendMessage(fmt.Sprintf(":%s:", emoji.Name), ":heavy_minus_sign:")
 
 			err := deleteEmoji(&emoji)
 
