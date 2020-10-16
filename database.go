@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	raven "github.com/getsentry/raven-go"
+	"github.com/getsentry/sentry-go"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )
@@ -17,7 +17,7 @@ func init() {
 	var err error
 	db, err = sqlx.Connect("postgres", os.Getenv("DATABASE_URL"))
 	if err != nil {
-		raven.CaptureErrorAndWait(err, nil)
+		sentry.CaptureException(err)
 		log.Fatalln(err) // TODO: Report this error to sentry?!?
 	}
 

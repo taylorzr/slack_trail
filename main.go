@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/getsentry/raven-go"
+	"github.com/getsentry/sentry-go"
 	"github.com/pkg/errors"
 	"github.com/slack-go/slack"
 	"github.com/urfave/cli"
@@ -46,7 +46,7 @@ func main() {
 	app := cli.NewApp()
 
 	app.Name = "trail"
-	app.Version = "0.1"
+	app.Version = fmt.Sprintf("0.1 (%s)", os.Getenv("SENTRY_RELEASE"))
 
 	app.Flags = []cli.Flag{
 		&cli.BoolFlag{
@@ -61,6 +61,16 @@ func main() {
 	}
 
 	app.Before = func(c *cli.Context) error {
+		sentry.Init(sentry.ClientOptions{
+			Dsn:         os.Getenv("SENTRY_DSN"),
+			DebugWriter: os.Stderr,
+			Debug:       true,
+			Environment: os.Getenv("SENTRY_ENVIRONMENT"),
+			Release:     os.Getenv("SENTRY_RELEASE"),
+			// IgnoreErrors: TBD,
+			// IncludePaths: TBD
+		})
+
 		verbose = c.Bool("verbose")
 		switch c.String("messenger") {
 		case "stdout":
@@ -222,18 +232,16 @@ func messageSlack(text string, emoji string, attachments ...slack.Attachment) er
 func withSentry(f func() error) func() error {
 	function := f
 	return func() error {
-
 		fmt.Println("Starting iteration...")
-		var err error
 
-		raven.CapturePanic(func() {
-			err = function()
+		defer sentry.Recover()
 
-			if err != nil {
-				fmt.Printf("Something broke :(\n%s\n", err.Error())
-				raven.CaptureErrorAndWait(err, nil)
-			}
-		}, nil)
+		err := function()
+
+		if err != nil {
+			fmt.Printf("Something broke :(\n%s\n", err.Error())
+			sentry.CaptureException(err)
+		}
 
 		fmt.Println("Finished iteration.")
 

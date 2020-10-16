@@ -60,6 +60,8 @@ Expects env vars:
 
 - SLACK_TOKEN
 - SENTRY_DSN
+- SENTRY_ENVIRONMENT
+- SENTRY_RELEASE
 - DATABASE_URL (used for dev)
 - SLACK_CHANNEL_ID (used for dev)
 - ULTIPRO_USERNAME
