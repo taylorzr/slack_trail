@@ -100,7 +100,6 @@ func runEmployeesIteration() error {
 	return errors.Wrap(err, "diffing employees")
 }
 
-// FIXME: Copied from users, modify for employees
 func diffEmployees(old, new []*Employee) error {
 	lookup := make(map[string]*Employee)
 

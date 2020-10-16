@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/cookiejar"
@@ -198,6 +199,14 @@ func GetDirectReports(browser *http.Client, employeeID string) (*EmployeeWithRep
 	err = json.NewDecoder(resp.Body).Decode(&data)
 
 	if err != nil {
+		body, err := ioutil.ReadAll(resp.Body)
+
+		if err != nil {
+			return nil, err
+		}
+
+		fmt.Println(string(body))
+
 		return nil, err
 	}
 
