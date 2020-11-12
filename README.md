@@ -25,14 +25,13 @@ $ serverless deploy list functions
 ### Deploy all
 
 ```sh
-$ make deploy
+$ make deploy_all
 ```
 
 ### Deploy single function
 
 ```sh
-$ make
-$ serverless deploy function --function users
+$ make deploy users
 ```
 
 ## TODO
