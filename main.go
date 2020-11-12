@@ -143,7 +143,6 @@ func main() {
 			Usage: "check for employees changes",
 			Action: func(c *cli.Context) error {
 				if aws {
-					// FIXME: Report errors?
 					lambda.Start(withSentry(runEmployeesIteration))
 					return nil
 				} else {

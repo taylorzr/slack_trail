@@ -95,20 +95,42 @@ func runEmployeesIteration() error {
 		return err
 	}
 
-	err = diffEmployees(oldEmployees, newEmployees)
+	oldLookup := map[string]*Employee{}
+
+	for _, oldEmployee := range oldEmployees {
+		oldLookup[oldEmployee.ID] = oldEmployee
+	}
+
+	err = createNewEmployees(oldLookup, newEmployees)
+
+	if err != nil {
+		return err
+	}
+
+	err = diffEmployees(oldLookup, newEmployees)
 
 	return errors.Wrap(err, "diffing employees")
 }
 
-func diffEmployees(old, new []*Employee) error {
-	lookup := make(map[string]*Employee)
+func createNewEmployees(oldLookup map[string]*Employee, newEmployees []*Employee) error {
+	for _, newEmployee := range newEmployees {
+		_, exists := oldLookup[newEmployee.ID]
 
-	for _, oldEmployee := range old {
-		lookup[oldEmployee.ID] = oldEmployee
+		if !exists {
+			_, err := createEmployee(newEmployee)
+
+			if err != nil {
+				return err
+			}
+		}
 	}
 
+	return nil
+}
+
+func diffEmployees(oldLookup map[string]*Employee, new []*Employee) error {
 	for _, newEmployee := range new {
-		if oldEmployee, ok := lookup[newEmployee.ID]; ok {
+		if oldEmployee, ok := oldLookup[newEmployee.ID]; ok {
 			if newEmployee.SupervisorID != oldEmployee.SupervisorID {
 				err := oldEmployee.ChangeSupervisor(newEmployee.SupervisorID)
 
@@ -116,15 +138,9 @@ func diffEmployees(old, new []*Employee) error {
 					return errors.Wrap(err, "changing employees supervisor")
 				}
 			}
-		} else {
-			// TODO: New employee
-			// err := registerAndAnnounceBaby(slackUser)
-
-			// if err != nil {
-			// 	return errors.Wrapf(err, "delivering a new baby user %s", slackUser.DisplayName)
-			// }
 		}
 	}
+
 	return nil
 }
 
