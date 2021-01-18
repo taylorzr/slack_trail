@@ -131,11 +131,11 @@ func createNewEmployees(oldLookup map[string]*Employee, newEmployees []*Employee
 func diffEmployees(oldLookup map[string]*Employee, new []*Employee) error {
 	for _, newEmployee := range new {
 		if oldEmployee, ok := oldLookup[newEmployee.ID]; ok {
-			if newEmployee.SupervisorID != oldEmployee.SupervisorID {
+			if newEmployee.SupervisorID != "" && newEmployee.SupervisorID != oldEmployee.SupervisorID {
 				err := oldEmployee.ChangeSupervisor(newEmployee.SupervisorID)
 
 				if err != nil {
-					return errors.Wrap(err, "changing employees supervisor")
+					return fmt.Errorf("changing employees supervisor: %w\n%+v\n", err, newEmployee)
 				}
 			}
 		}

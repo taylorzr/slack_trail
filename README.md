@@ -36,6 +36,7 @@ $ make deploy users
 
 ## TODO
 
+- [ ] add title when announcing death
 - [ ] more ultipro diffs
 - [ ] diff avatars
 - [ ] diff is_admin
