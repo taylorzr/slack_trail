@@ -95,7 +95,7 @@ func GetAllReports(browser *http.Client, person *EmployeeWithReports, people []*
 	}
 
 	if root.ID != person.ID {
-		return nil, fmt.Errorf("Processing %s(%s), expected to find self at %v indexes but found %s(%s) instead", person.Name, person.ID, indexes, root.Name, root.ID)
+		return nil, fmt.Errorf("processing %s(%s), expected to find self at %v indexes but found %s(%s) instead", person.Name, person.ID, indexes, root.Name, root.ID)
 	}
 
 	for i, p := range root.Reports {
@@ -168,7 +168,7 @@ func Login() (*http.Client, error) {
 	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
-	resp, err = browser.Do(req)
+	_, err = browser.Do(req)
 
 	if err != nil {
 		return nil, err
@@ -203,9 +203,10 @@ func GetDirectReports(browser *http.Client, employeeID string) (*EmployeeWithRep
 	err = json.NewDecoder(resp.Body).Decode(&data)
 
 	if err != nil {
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err2 := ioutil.ReadAll(resp.Body)
 
-		if err != nil {
+		if err2 != nil {
+			fmt.Printf("error trying to read body: %s\n", err2)
 			return nil, err
 		}
 
