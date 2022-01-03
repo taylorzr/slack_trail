@@ -31,11 +31,12 @@ $ make deploy_all
 ### Deploy single function
 
 ```sh
-$ make deploy users
+$ make deploy function=users
 ```
 
 ## TODO
 
+- [ ] post slack message when new version is deployed
 - [ ] add title when announcing death
 - [ ] more ultipro diffs
 - [ ] diff avatars

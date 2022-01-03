@@ -107,10 +107,7 @@ func main() {
 			Name:  "users",
 			Usage: "check for users changes",
 			Action: func(c *cli.Context) error {
-				// FIXME: Problem here is aws doesn't call trail with argument
-				// argument is stored in env COMMAND
 				if aws {
-					// FIXME: Report errors?
 					lambda.Start(withSentry(runUsersIteration))
 					return nil
 				} else {
@@ -123,7 +120,6 @@ func main() {
 			Usage: "check for emoji changes",
 			Action: func(c *cli.Context) error {
 				if aws {
-					// FIXME: Report errors?
 					lambda.Start(withSentry(runEmojisIteration))
 					return nil
 				} else {
@@ -177,7 +173,7 @@ func main() {
 		aws = true
 		if _, exists := os.LookupEnv("COMMAND"); !exists {
 			lambda.Start(withSentry(func() error {
-				return fmt.Errorf("You must specify an env COMMAND")
+				return fmt.Errorf("you must specify an env COMMAND")
 			}))
 		}
 	}
@@ -205,7 +201,7 @@ var diseases = []string{
 
 func randomDisease() string {
 	rand.Seed(time.Now().UTC().UnixNano())
-	disease := diseases[rand.Intn(len(diseases)+1)]
+	disease := diseases[rand.Intn(len(diseases))]
 	return disease
 }
 
@@ -233,6 +229,7 @@ func withSentry(f func() error) func() error {
 	return func() error {
 		fmt.Println("Starting iteration...")
 
+		defer sentry.Flush(2 * time.Second)
 		defer sentry.Recover()
 
 		err := function()
