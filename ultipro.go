@@ -192,6 +192,10 @@ func GetDirectReports(browser *http.Client, employeeID string) (*EmployeeWithRep
 		return nil, err
 	}
 
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("expected 200 status but got %d", resp.StatusCode)
+	}
+
 	data := struct {
 		OrgChart EmployeeWithReports `json:"orgChart"`
 	}{}
