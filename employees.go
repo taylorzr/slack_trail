@@ -67,6 +67,18 @@ func (employee Employee) ChangeSupervisor(newSupervisorID string) error {
 	return employee.Update()
 }
 
+func (employee Employee) ChangeReportsCount(newCount int) error {
+	text := fmt.Sprintf("%s's reports changed from %d to %d", employee.Name, employee.ReportsCount, newCount)
+
+	err := sendMessage(text, ":name_badge:")
+	if err != nil {
+		return errors.Wrap(err, "sending reports count change message")
+	}
+
+	employee.ReportsCount = newCount
+	return employee.Update()
+}
+
 func createEmployee(employee *Employee) (*Employee, error) {
 	employee.CreatedAt = time.Now()
 
@@ -135,7 +147,14 @@ func diffEmployees(oldLookup map[string]*Employee, new []*Employee) error {
 				err := oldEmployee.ChangeSupervisor(newEmployee.SupervisorID)
 
 				if err != nil {
-					return fmt.Errorf("changing employees supervisor: %w\n%+v\n", err, newEmployee)
+					return fmt.Errorf("changing employees supervisor: %w\n%+v", err, newEmployee)
+				}
+			}
+
+			if newEmployee.ReportsCount != oldEmployee.ReportsCount {
+				err := oldEmployee.ChangeReportsCount(newEmployee.ReportsCount)
+				if err != nil {
+					return fmt.Errorf("changing employees reports count: %w\n%+v", err, newEmployee)
 				}
 			}
 		}

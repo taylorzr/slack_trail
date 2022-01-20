@@ -5,16 +5,16 @@ import (
 )
 
 func TestNewborn(t *testing.T) {
-	users := []User{}
+	// users := []User{}
 
-	slackUsers := []User{{
-		ID:       "zt",
-		Name:     "zach",
-		RealName: "Zach Taylor",
-		Deleted:  false,
-	}}
+	// slackUsers := []User{{
+	// 	ID:       "zt",
+	// 	Name:     "zach",
+	// 	RealName: "Zach Taylor",
+	// 	Deleted:  false,
+	// }}
 
-	_ = diffUsers(users, slackUsers)
+	// _ = diffUsers(users, slackUsers)
 
 	// TODO: How can I expect a change was made to the database, err maybe just check the user object
 	// was changed?
